@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 
 function useScrollReveal() {
   const ref = useRef(null)
@@ -25,14 +26,62 @@ const langLabels: Record<Language, string> = {
   ml: 'മലയാളം',
 }
 
+interface SiteSectionData {
+  id: string
+  sectionKey: string
+  label: string
+  order: number
+  visible: boolean
+  sectionType: string
+  contentHi: string
+  contentEn: string
+  contentMl: string
+}
+
 export default function Home() {
   const [lang, setLang] = useState<Language>('hi')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLangMenu, setShowLangMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [siteSections, setSiteSections] = useState<SiteSectionData[]>([])
+  const [sectionVisibility, setSectionVisibility] = useState<Record<string, boolean>>({})
 
-  const t = (key: string) => translations[lang][key] || key
+  // Fetch site sections from API on mount
+  useEffect(() => {
+    fetch('/api/site-content')
+      .then(res => res.ok ? res.json() : [])
+      .then((sections: SiteSectionData[]) => {
+        setSiteSections(sections)
+        const vis: Record<string, boolean> = {}
+        sections.forEach(s => { vis[s.sectionKey] = s.visible })
+        setSectionVisibility(vis)
+      })
+      .catch(() => {}) // fallback to translations
+  }, [])
+
+  // Build a merged translation: DB content overrides hardcoded translations
+  const dbContent = (() => {
+    const merged: Record<Language, Record<string, string>> = { hi: {}, en: {}, ml: {} }
+    for (const section of siteSections) {
+      try {
+        const hi = JSON.parse(section.contentHi || '{}')
+        const en = JSON.parse(section.contentEn || '{}')
+        const ml = JSON.parse(section.contentMl || '{}')
+        Object.entries(hi).forEach(([k, v]) => { merged.hi[k] = v as string })
+        Object.entries(en).forEach(([k, v]) => { merged.en[k] = v as string })
+        Object.entries(ml).forEach(([k, v]) => { merged.ml[k] = v as string })
+      } catch { /* skip invalid JSON */ }
+    }
+    return merged
+  })()
+
+  const t = (key: string) => dbContent[lang]?.[key] || translations[lang][key] || key
+
+  const isSectionVisible = (key: string) => {
+    if (Object.keys(sectionVisibility).length === 0) return true
+    return sectionVisibility[key] !== false
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -174,7 +223,7 @@ export default function Home() {
       )}
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
+      {isSectionVisible('hero') && <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
         {/* Background */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-br from-[#FF9933]/20 via-[#FFF8F0] to-[#138808]/15" />
@@ -248,10 +297,10 @@ export default function Home() {
             </motion.div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* Vision & Mission Section */}
-      <SectionWrapper id="vision" className="bg-gradient-to-b from-white to-[#FFF8F0]">
+      {isSectionVisible('vision') && <SectionWrapper id="vision" className="bg-gradient-to-b from-white to-[#FFF8F0]">
         <SectionHeader title={t('visionTitle')} icon={<Eye className="w-6 h-6" />} />
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           <FeatureCard
@@ -269,10 +318,10 @@ export default function Home() {
             delay={0.2}
           />
         </div>
-      </SectionWrapper>
+      </SectionWrapper>}
 
       {/* HAM Leadership Section */}
-      <SectionWrapper id="ham-leadership" className="bg-[#000080]">
+      {isSectionVisible('ham-leadership') && <SectionWrapper id="ham-leadership" className="bg-[#000080]">
         <SectionHeader title={t('hamLeadershipTitle')} icon={<Landmark className="w-6 h-6" />} light />
         <div className="max-w-5xl mx-auto">
           <div className="grid lg:grid-cols-3 gap-8 items-start">
@@ -331,10 +380,10 @@ export default function Home() {
             </motion.div>
           </div>
         </div>
-      </SectionWrapper>
+      </SectionWrapper>}
 
       {/* YHAM Leadership Section */}
-      <SectionWrapper id="leadership" className="bg-gradient-to-b from-[#FFF8F0] to-white">
+      {isSectionVisible('yham-leadership') && <SectionWrapper id="leadership" className="bg-gradient-to-b from-[#FFF8F0] to-white">
         <SectionHeader title={t('yhamLeadershipTitle')} icon={<Award className="w-6 h-6" />} />
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Youth President - Kamal Parvez */}
@@ -388,10 +437,10 @@ export default function Home() {
             delay={0.4}
           />
         </div>
-      </SectionWrapper>
+      </SectionWrapper>}
 
       {/* Grassroots Organization Section */}
-      <SectionWrapper id="grassroots" className="bg-gradient-to-b from-white to-[#F0FFF0]">
+      {isSectionVisible('grassroots') && <SectionWrapper id="grassroots" className="bg-gradient-to-b from-white to-[#F0FFF0]">
         <SectionHeader title={t('grassrootsTitle')} icon={<Building2 className="w-6 h-6" />} />
         <div className="grid lg:grid-cols-2 gap-10 max-w-6xl mx-auto">
           {/* Structure */}
@@ -464,10 +513,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </SectionWrapper>
+      </SectionWrapper>}
 
       {/* Opportunities Section */}
-      <SectionWrapper id="opportunities" className="bg-gradient-to-b from-[#F0FFF0] to-white">
+      {isSectionVisible('opportunities') && <SectionWrapper id="opportunities" className="bg-gradient-to-b from-[#F0FFF0] to-white">
         <SectionHeader title={t('opportunitiesTitle')} icon={<Lightbulb className="w-6 h-6" />} />
         <div className="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
           {/* Local Issues */}
@@ -500,10 +549,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </SectionWrapper>
+      </SectionWrapper>}
 
       {/* National Presence Section */}
-      <SectionWrapper id="national" className="bg-gradient-to-b from-white to-[#F0F0FF]">
+      {isSectionVisible('national') && <SectionWrapper id="national" className="bg-gradient-to-b from-white to-[#F0F0FF]">
         <SectionHeader title={t('nationalTitle')} icon={<Tv className="w-6 h-6" />} />
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           <FeatureCard
@@ -535,10 +584,10 @@ export default function Home() {
             delay={0.6}
           />
         </div>
-      </SectionWrapper>
+      </SectionWrapper>}
 
       {/* Collaboration Section */}
-      <SectionWrapper id="collaboration" className="bg-gradient-to-b from-[#F0F0FF] to-white">
+      {isSectionVisible('collaboration') && <SectionWrapper id="collaboration" className="bg-gradient-to-b from-[#F0F0FF] to-white">
         <SectionHeader title={t('collaborationTitle')} icon={<Handshake className="w-6 h-6" />} />
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
           <CollabCard
@@ -570,10 +619,10 @@ export default function Home() {
             delay={0.45}
           />
         </div>
-      </SectionWrapper>
+      </SectionWrapper>}
 
       {/* Monitoring, Funding & Code of Conduct */}
-      <SectionWrapper id="monitoring" className="bg-gradient-to-b from-white to-[#FFF8F0]">
+      {isSectionVisible('monitoring') && <SectionWrapper id="monitoring" className="bg-gradient-to-b from-white to-[#FFF8F0]">
         <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {/* Monitoring */}
           <div>
@@ -622,10 +671,10 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </SectionWrapper>
+      </SectionWrapper>}
 
       {/* Call to Action Section */}
-      <section id="cta" className="relative overflow-hidden py-20 sm:py-28">
+      {isSectionVisible('cta') && <section id="cta" className="relative overflow-hidden py-20 sm:py-28">
         <div className="absolute inset-0 bg-gradient-to-br from-[#FF9933] via-[#000080] to-[#138808]" />
         <div className="absolute inset-0 bg-[#000080]/60" />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
@@ -683,7 +732,7 @@ export default function Home() {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section>}
 
       {/* Footer */}
       <footer className="bg-[#000080] text-white mt-auto">
@@ -718,6 +767,9 @@ export default function Home() {
                     {t(item.key)}
                   </button>
                 ))}
+                <Link href="/admin" className="text-left text-white/40 hover:text-[#FF9933] transition-colors text-xs py-1 mt-2 block">
+                  Admin Panel
+                </Link>
               </div>
             </div>
 
@@ -770,7 +822,8 @@ export default function Home() {
 
 // ========== Reusable Components ==========
 
-function SectionWrapper({ id, className, children }: { id: string; className?: string; children: React.ReactNode }) {
+function SectionWrapper({ id, className, children, sectionKey }: { id: string; className?: string; children: React.ReactNode; sectionKey?: string }) {
+  // Visibility will be checked by parent using isSectionVisible
   return (
     <section id={id} className={`py-16 sm:py-24 px-4 sm:px-6 lg:px-8 ${className || ''}`}>
       <div className="max-w-7xl mx-auto">{children}</div>
