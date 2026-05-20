@@ -99,3 +99,47 @@ model AnalyticsEvent {
   ip        String   @default("")
   createdAt DateTime @default(now())
 }
+
+// ─── Page Builder Models ─────────────────────────────────────────────────────
+
+model Page {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  titleHi     String   @default("")
+  titleEn     String   @default("")
+  titleMl     String   @default("")
+  description String   @default("")
+  template    String   @default("default") // default, fullwidth, sidebar, landing
+  theme       String   @default("saffron") // saffron, red-white, navy, green
+  published   Boolean  @default(false)
+  isHomePage  Boolean  @default(false)
+  order       Int      @default(0)
+  blocks      Block[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      String   // hero, text, leaders, gallery, cta, stats, contact, video, spacer, columns
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  content   String   @default("{}") // JSON: all block data (multilingual content, settings, styles)
+  settings  String   @default("{}") // JSON: layout settings (bg color, padding, width, etc.)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlockTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  type        String   // same as Block.type
+  category    String   @default("general") // general, leadership, content, media, layout
+  thumbnail   String   @default("")
+  content     String   @default("{}") // default content JSON
+  settings    String   @default("{}") // default settings JSON
+  createdAt   DateTime @default(now())
+}

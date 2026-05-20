@@ -60,6 +60,7 @@ import {
   Clock,
   ArrowUpRight,
   FolderOpen,
+  Layout,
 } from 'lucide-react'
 import {
   LineChart,
@@ -2217,6 +2218,15 @@ export default function AdminPage() {
           })}
         </div>
       </ScrollArea>
+
+      {/* Page Builder Link */}
+      <div className="px-3 py-2 border-t border-white/10">
+        <a href="/admin/builder" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white/90 transition-all">
+          <Layout className="size-4 shrink-0" />
+          <span className="flex-1 text-left">Page Builder</span>
+          <ExternalLink className="size-3 opacity-50" />
+        </a>
+      </div>
 
       {/* User info & Logout */}
       <div className="p-3 border-t border-white/10">
