@@ -364,49 +364,30 @@ export default function Home() {
       {/* HAM Leadership Section */}
       {isSectionVisible('ham-leadership') && <SectionWrapper id="ham-leadership" className="bg-[#000080]">
         <SectionHeader title={t('hamLeadershipTitle')} icon={<Landmark className="w-6 h-6" />} light />
-        <div className="max-w-5xl mx-auto">
-          <div className="max-w-3xl mx-auto">
-            {/* HAM Leaders Image */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="w-full"
-            >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl mb-6">
-                <img
-                  src={t('hamPatronImage') || "/ham-leaders.jpg"}
-                  alt="HAM Leadership"
-                  className="w-full h-auto object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#000080]/60 to-transparent" />
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {hamMembers.map((member, idx) => {
+              const name = lang === 'hi' ? member.nameHi : lang === 'ml' ? member.nameMl : member.nameEn
+              const role = lang === 'hi' ? member.roleHi : lang === 'ml' ? member.roleMl : member.roleEn
+              return (
                 <LeaderCard
-                  name={t('hamPatronName')}
-                  role={t('hamPatron')}
-                  color="saffron"
-                  delay={0}
-                  image={t('hamPatronImage')}
+                  key={member.id}
+                  name={name}
+                  role={role}
+                  color={idx % 2 === 0 ? 'saffron' : 'green'}
+                  delay={idx * 0.05}
+                  image={member.imageUrl}
                 />
-                <LeaderCard
-                  name={t('hamPresidentName')}
-                  role={t('hamPresident')}
-                  color="green"
-                  delay={0.2}
-                  image={t('hamPresidentImage')}
-                />
-              </div>
-              <div className="mt-6 text-center">
-                <Link href="/national-leadership">
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 gap-2">
-                    <Users className="size-4" />
-                    View Full National Executive →
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
+              )
+            })}
+          </div>
+          <div className="mt-8 text-center">
+            <Link href="/national-leadership">
+              <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 gap-2">
+                <Users className="size-4" />
+                View Full National Executive →
+              </Button>
+            </Link>
           </div>
         </div>
       </SectionWrapper>}
