@@ -624,15 +624,7 @@ function BlockEditor({ block, onSave, saving }: { block: BlockData; onSave: (con
           </div>
         )
       case 'leaders':
-        return (
-          <div className="space-y-4">
-            <Field label="Section Title (EN)" value={content.titleEn || ''} onChange={v => updateContent('titleEn', v)} />
-            <Field label="Section Title (HI)" value={content.titleHi || ''} onChange={v => updateContent('titleHi', v)} />
-            <Field label="Member Category" value={content.category || 'ham'} onChange={v => updateContent('category', v)} />
-            <p className="text-xs text-gray-400">Shows members from the Members panel matching this category (ham, yham, endorsement)</p>
-            <Field label="Columns" value={settings.columns || '4'} onChange={v => updateSettings('columns', v)} />
-          </div>
-        )
+        return <LeadersBlockEditor content={content} settings={settings} updateContent={updateContent} updateSettings={updateSettings} />
       case 'gallery':
         return (
           <div className="space-y-4">
@@ -727,6 +719,153 @@ function BlockEditor({ block, onSave, saving }: { block: BlockData; onSave: (con
         {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}
         {saving ? 'Saving...' : 'Save Block'}
       </Button>
+    </div>
+  )
+}
+
+function LeadersBlockEditor({ content, settings, updateContent, updateSettings }: {
+  content: Record<string, string>
+  settings: Record<string, string>
+  updateContent: (key: string, value: string) => void
+  updateSettings: (key: string, value: string) => void
+}) {
+  const [members, setMembers] = useState<any[]>([])
+  const [loadingMembers, setLoadingMembers] = useState(true)
+  const [editingMember, setEditingMember] = useState<any | null>(null)
+  const [savingMember, setSavingMember] = useState(false)
+  const { toast } = useToast()
+  const category = content.category || 'ham'
+
+  const fetchMembers = useCallback(async () => {
+    setLoadingMembers(true)
+    try {
+      const res = await fetch('/api/members')
+      if (res.ok) {
+        const data = await res.json()
+        setMembers(data.filter((m: any) => m.category === category))
+      }
+    } catch { /* silent */ }
+    finally { setLoadingMembers(false) }
+  }, [category])
+
+  useEffect(() => { fetchMembers() }, [fetchMembers])
+
+  const handleSaveMember = async () => {
+    if (!editingMember) return
+    setSavingMember(true)
+    try {
+      const isNew = !editingMember.id
+      const url = isNew ? '/api/members' : `/api/members/${editingMember.id}`
+      const method = isNew ? 'POST' : 'PATCH'
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editingMember) })
+      if (!res.ok) throw new Error()
+      toast({ title: isNew ? 'Member added!' : 'Member updated!' })
+      setEditingMember(null)
+      fetchMembers()
+    } catch {
+      toast({ title: 'Error', description: 'Failed to save member', variant: 'destructive' })
+    } finally { setSavingMember(false) }
+  }
+
+  const handleDeleteMember = async (id: string) => {
+    try {
+      await fetch(`/api/members/${id}`, { method: 'DELETE' })
+      toast({ title: 'Deleted' })
+      fetchMembers()
+    } catch {
+      toast({ title: 'Error', variant: 'destructive' })
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Field label="Section Title (EN)" value={content.titleEn || ''} onChange={v => updateContent('titleEn', v)} />
+      <Field label="Section Title (HI)" value={content.titleHi || ''} onChange={v => updateContent('titleHi', v)} />
+      <Field label="Section Title (ML)" value={content.titleMl || ''} onChange={v => updateContent('titleMl', v)} />
+      <Separator />
+      <div className="space-y-1.5">
+        <Label className="text-xs text-gray-500">Category</Label>
+        <Select value={category} onValueChange={v => updateContent('category', v)}>
+          <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ham">HAM (National)</SelectItem>
+            <SelectItem value="yham">YHAM (Youth)</SelectItem>
+            <SelectItem value="endorsement">Endorsement</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <Field label="Columns" value={settings.columns || '4'} onChange={v => updateSettings('columns', v)} />
+      <Separator />
+
+      {/* Members List */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-gray-500 font-semibold">Members ({members.length})</Label>
+          <Button size="sm" className="h-6 text-[10px] gap-1 bg-red-600 hover:bg-red-700 text-white" onClick={() => setEditingMember({ nameHi: '', nameEn: '', nameMl: '', roleHi: '', roleEn: '', roleMl: '', phone: '', email: '', imageUrl: '', category, order: members.length, visible: true })}>
+            <Plus className="size-3" /> Add
+          </Button>
+        </div>
+
+        {loadingMembers ? (
+          <div className="py-4 text-center"><Loader2 className="size-4 animate-spin mx-auto text-gray-400" /></div>
+        ) : members.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-3">No members in this category</p>
+        ) : (
+          <div className="space-y-1.5 max-h-64 overflow-y-auto">
+            {members.map((m: any) => (
+              <div key={m.id} className="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:border-gray-200 bg-white">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 shrink-0">
+                  {m.imageUrl ? <img src={m.imageUrl} alt="" className="w-full h-full object-cover" /> : <Users className="w-full h-full p-1.5 text-gray-300" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{m.nameEn}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{m.roleEn}</p>
+                </div>
+                <Button size="icon" variant="ghost" className="size-6" onClick={() => setEditingMember({ ...m })}>
+                  <FileText className="size-3" />
+                </Button>
+                <Button size="icon" variant="ghost" className="size-6 text-red-500" onClick={() => handleDeleteMember(m.id)}>
+                  <Trash2 className="size-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Inline Member Editor */}
+      {editingMember && (
+        <div className="border border-red-200 rounded-lg p-3 bg-red-50/50 space-y-3">
+          <p className="text-xs font-semibold text-red-700">{editingMember.id ? 'Edit Member' : 'New Member'}</p>
+          <div className="space-y-1.5">
+            <Label className="text-[10px]">Photo</Label>
+            <ImageUploader
+              value={editingMember.imageUrl || ''}
+              onChange={v => setEditingMember((prev: any) => ({ ...prev, imageUrl: v }))}
+              folder="leaders"
+              category="leaders"
+              placeholder="Upload photo"
+              aspectRatio="aspect-square"
+              className="max-w-[120px]"
+            />
+          </div>
+          <Field label="Name (EN)" value={editingMember.nameEn || ''} onChange={v => setEditingMember((prev: any) => ({ ...prev, nameEn: v }))} />
+          <Field label="Name (HI)" value={editingMember.nameHi || ''} onChange={v => setEditingMember((prev: any) => ({ ...prev, nameHi: v }))} />
+          <Field label="Name (ML)" value={editingMember.nameMl || ''} onChange={v => setEditingMember((prev: any) => ({ ...prev, nameMl: v }))} />
+          <Field label="Role (EN)" value={editingMember.roleEn || ''} onChange={v => setEditingMember((prev: any) => ({ ...prev, roleEn: v }))} />
+          <Field label="Role (HI)" value={editingMember.roleHi || ''} onChange={v => setEditingMember((prev: any) => ({ ...prev, roleHi: v }))} />
+          <Field label="Role (ML)" value={editingMember.roleMl || ''} onChange={v => setEditingMember((prev: any) => ({ ...prev, roleMl: v }))} />
+          <Field label="Phone" value={editingMember.phone || ''} onChange={v => setEditingMember((prev: any) => ({ ...prev, phone: v }))} />
+          <Field label="Email" value={editingMember.email || ''} onChange={v => setEditingMember((prev: any) => ({ ...prev, email: v }))} />
+          <div className="flex gap-2">
+            <Button size="sm" className="flex-1 h-7 text-xs bg-red-600 hover:bg-red-700 text-white" onClick={handleSaveMember} disabled={savingMember}>
+              {savingMember ? <Loader2 className="size-3 animate-spin mr-1" /> : <Save className="size-3 mr-1" />}
+              {editingMember.id ? 'Update' : 'Create'}
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingMember(null)}>Cancel</Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
