@@ -39,7 +39,7 @@ interface SiteSectionData {
 }
 
 export default function Home() {
-  const [lang, setLang] = useState<Language>('hi')
+  const [lang, setLang] = useState<Language>('en')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLangMenu, setShowLangMenu] = useState(false)
   const [scrolled, setScrolled] = useState(false)
