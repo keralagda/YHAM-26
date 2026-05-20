@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { verifySession } from '@/lib/auth'
 
 export async function GET() {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const media = await db.media.findMany({
       orderBy: { createdAt: 'desc' },
@@ -14,9 +18,12 @@ export async function GET() {
 }
 
 export async function DELETE(request: Request) {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const { id } = await request.json()
-    if (!id) {
+    if (!id || typeof id !== 'string') {
       return NextResponse.json({ error: 'Media ID is required' }, { status: 400 })
     }
 

@@ -20,13 +20,14 @@ export const translations: Record<Language, Record<string, string>> = {
     heroTagline: "भारत के युवाओं को संगठित कर, समावेशी और प्रगतिशील समाज का निर्माण",
     heroCta: "आज ही जुड़ें",
     heroLearnMore: "और जानें",
+    heroBannerImage: "",
 
     // Vision & Mission
     visionTitle: "दृष्टि और मिशन",
     visionHeading: "हमारी दृष्टि",
-    visionText: "भारत के युवाओं को सशक्त बनाना, उन्हें राष्ट्र निर्माण में सक्रिय भागीदार बनाना और एक समावेशी, प्रगतिशील समाज का निर्माण करना।",
+    visionText: "भारत के युवाओं को सशक्त बनाना, उन्हें राष्ट्र निर्माण में सक्रिय भागीदार बनाना और एक समावेशी, प्रगतिशील समाज का निर्माण करना। दक्षिण भारतीय राज्यों — केरल, तमिलनाडु, कर्नाटक, तेलंगाना और आंध्र प्रदेश में पार्टी की उपस्थिति बढ़ाने पर विशेष ध्यान।",
     missionHeading: "हमारा मिशन",
-    missionText: "ग्राम से लेकर राष्ट्रीय स्तर तक युवाओं को संगठित करना, उनके मुद्दों को उठाना, नेतृत्व क्षमता विकसित करना और सामाजिक, आर्थिक व राजनीतिक परिवर्तन के लिए निरंतर काम करना।",
+    missionText: "ग्राम से लेकर राष्ट्रीय स्तर तक युवाओं को संगठित करना, उनके मुद्दों को उठाना, नेतृत्व क्षमता विकसित करना और सामाजिक, आर्थिक व राजनीतिक परिवर्तन के लिए निरंतर काम करना। युवा उपाध्यक्ष और महासचिव पद दक्षिण भारत में पार्टी के जमीनी नेटवर्क के निर्माण के लिए समर्पित हैं।",
 
     // HAM Leadership
     hamLeadershipTitle: "हिंदुस्तानी अवाम मोर्चा (HAM) नेतृत्व",
@@ -34,16 +35,21 @@ export const translations: Record<Language, Record<string, string>> = {
     hamPresident: "राष्ट्रीय अध्यक्ष",
     hamPatronName: "जीतन राम मांझी",
     hamPresidentName: "संतोष कुमार सुमन",
+    hamPatronImage: "",
+    hamPresidentImage: "",
 
     // YHAM Leadership
     yhamLeadershipTitle: "युवा हिंदुस्तानी अवाम मोर्चा नेतृत्व",
     youthPresident: "राष्ट्रीय युवा अध्यक्ष",
-    youthVicePresident: "राष्ट्रीय युवा उपाध्यक्ष",
+    youthVicePresident: "राष्ट्रीय युवा उपाध्यक्ष (दक्षिण भारत प्रभारी)",
     youthGenSecretary: "राष्ट्रीय युवा महासचिव",
     youthPresidentName: "कमल परवेज़",
     youthVicePresidentName: "कैलास पी",
     youthGenSecretaryName: "अनीस बी",
-    youthGenSecretaryRole: "संगठनात्मक - YHAM",
+    youthGenSecretaryRole: "संगठनात्मक - YHAM (दक्षिण भारत)",
+    youthPresidentImage: "",
+    youthVicePresidentImage: "",
+    youthGenSecretaryImage: "",
     proposedBy: "प्रस्तावित by",
 
     // Grassroots
@@ -154,13 +160,14 @@ export const translations: Record<Language, Record<string, string>> = {
     heroTagline: "Organizing India's youth to build an inclusive and progressive society",
     heroCta: "Join Today",
     heroLearnMore: "Learn More",
+    heroBannerImage: "",
 
     // Vision & Mission
     visionTitle: "Vision & Mission",
     visionHeading: "Our Vision",
-    visionText: "To empower India's youth, make them active participants in nation-building, and create an inclusive, progressive society.",
+    visionText: "To empower India's youth, make them active participants in nation-building, and create an inclusive, progressive society. With a special focus on expanding the party's presence in South Indian states — Kerala, Tamil Nadu, Karnataka, Telangana, and Andhra Pradesh.",
     missionHeading: "Our Mission",
-    missionText: "To organize youth from the village level to the national level, raise their issues, develop leadership capacity, and work continuously for social, economic, and political change.",
+    missionText: "To organize youth from the village level to the national level, raise their issues, develop leadership capacity, and work continuously for social, economic, and political change. The Youth Vice President and General Secretary positions are dedicated to building the party's grassroots network across South India.",
 
     // HAM Leadership
     hamLeadershipTitle: "Hindustani Awam Morcha (HAM) Leadership",
@@ -168,16 +175,21 @@ export const translations: Record<Language, Record<string, string>> = {
     hamPresident: "National President",
     hamPatronName: "Jitan Ram Manjhi",
     hamPresidentName: "Santosh Kumar Suman",
+    hamPatronImage: "",
+    hamPresidentImage: "",
 
     // YHAM Leadership
     yhamLeadershipTitle: "Yuva Hindustani Awam Morcha Leadership",
     youthPresident: "National Youth President",
-    youthVicePresident: "National Youth Vice President",
+    youthVicePresident: "National Youth Vice President (South India In-charge)",
     youthGenSecretary: "National Youth General Secretary",
     youthPresidentName: "Kamal Parvez",
     youthVicePresidentName: "Kailas P",
     youthGenSecretaryName: "Anees B",
-    youthGenSecretaryRole: "Organizational - YHAM",
+    youthGenSecretaryRole: "Organizational - YHAM (South India)",
+    youthPresidentImage: "",
+    youthVicePresidentImage: "",
+    youthGenSecretaryImage: "",
     proposedBy: "Proposed by",
 
     // Grassroots
@@ -288,13 +300,14 @@ export const translations: Record<Language, Record<string, string>> = {
     heroTagline: "ഒരു ഉൾക്കൊള്ളുന്ന, പുരോഗമന സമൂഹം കെട്ടിപ്പടുക്കാൻ ഇന്ത്യയിലെ യുവാക്കളെ സംഘടിപ്പിക്കുന്നു",
     heroCta: "ഇന്നേ ചേരൂ",
     heroLearnMore: "കൂടുതൽ അറിയുക",
+    heroBannerImage: "",
 
     // Vision & Mission
     visionTitle: "ദർശനവും ദൗത്യവും",
     visionHeading: "ഞങ്ങളുടെ ദർശനം",
-    visionText: "ഇന്ത്യയിലെ യുവാക്കളെ ശാക്തീകരിക്കുക, രാഷ്ട്രനിർമ്മാണത്തിൽ സജീവ പങ്കാളികളാക്കുക, ഒരു ഉൾക്കൊള്ളുന്ന പുരോഗമന സമൂഹം സൃഷ്ടിക്കുക.",
+    visionText: "ഇന്ത്യയിലെ യുവാക്കളെ ശാക്തീകരിക്കുക, രാഷ്ട്രനിർമ്മാണത്തിൽ സജീവ പങ്കാളികളാക്കുക, ഒരു ഉൾക്കൊള്ളുന്ന പുരോഗമന സമൂഹം സൃഷ്ടിക്കുക. ദക്ഷിണേന്ത്യൻ സംസ്ഥാനങ്ങളായ കേരളം, തമിഴ്‌നാട്, കർണാടക, തെലങ്കാന, ആന്ധ്രാപ്രദേശ് എന്നിവിടങ്ങളിൽ പാർട്ടിയുടെ സാന്നിധ്യം വിപുലീകരിക്കുന്നതിൽ പ്രത്യേക ശ്രദ്ധ.",
     missionHeading: "ഞങ്ങളുടെ ദൗത്യം",
-    missionText: "ഗ്രാമ തലം മുതൽ ദേശീയ തലം വരെ യുവാക്കളെ സംഘടിപ്പിക്കുക, അവരുടെ പ്രശ്നങ്ങൾ ഉന്നയിക്കുക, നേതൃത്വ ശേഷി വികസിപ്പിക്കുക, സാമൂഹിക, സാമ്പത്തിക, രാഷ്ട്രീയ മാറ്റത്തിനായി തുടർച്ചയായി പ്രവർത്തിക്കുക.",
+    missionText: "ഗ്രാമ തലം മുതൽ ദേശീയ തലം വരെ യുവാക്കളെ സംഘടിപ്പിക്കുക, അവരുടെ പ്രശ്നങ്ങൾ ഉന്നയിക്കുക, നേതൃത്വ ശേഷി വികസിപ്പിക്കുക, സാമൂഹിക, സാമ്പത്തിക, രാഷ്ട്രീയ മാറ്റത്തിനായി തുടർച്ചയായി പ്രവർത്തിക്കുക. യുവ വൈസ് പ്രസിഡന്റ്, ജനറൽ സെക്രട്ടറി സ്ഥാനങ്ങൾ ദക്ഷിണേന്ത്യയിൽ പാർട്ടിയുടെ അടിത്തട്ട് ശൃംഖല കെട്ടിപ്പടുക്കുന്നതിന് സമർപ്പിതമാണ്.",
 
     // HAM Leadership
     hamLeadershipTitle: "ഹിന്ദുസ്ഥാനി അവാം മോർച്ച (HAM) നേതൃത്വം",
@@ -302,16 +315,21 @@ export const translations: Record<Language, Record<string, string>> = {
     hamPresident: "ദേശീയ അധ്യക്ഷൻ",
     hamPatronName: "ജിതൻ റാം മാഞ്ചി",
     hamPresidentName: "സന്തോഷ് കുമാർ സുമൻ",
+    hamPatronImage: "",
+    hamPresidentImage: "",
 
     // YHAM Leadership
     yhamLeadershipTitle: "യുവ ഹിന്ദുസ്ഥാനി അവാം മോർച്ച നേതൃത്വം",
     youthPresident: "ദേശീയ യുവജന അധ്യക്ഷൻ",
-    youthVicePresident: "ദേശീയ യുവജന വൈസ് പ്രസിഡന്റ്",
+    youthVicePresident: "ദേശീയ യുവജന വൈസ് പ്രസിഡന്റ് (ദക്ഷിണേന്ത്യ ചുമതല)",
     youthGenSecretary: "ദേശീയ യുവജന ജനറൽ സെക്രട്ടറി",
     youthPresidentName: "കമൽ പർവേസ്",
     youthVicePresidentName: "കൈലാസ് പി",
     youthGenSecretaryName: "അനീസ് ബി",
-    youthGenSecretaryRole: "ഓർഗനൈസേഷണൽ - YHAM",
+    youthGenSecretaryRole: "ഓർഗനൈസേഷണൽ - YHAM (ദക്ഷിണേന്ത്യ)",
+    youthPresidentImage: "",
+    youthVicePresidentImage: "",
+    youthGenSecretaryImage: "",
     proposedBy: "നിർദ്ദേശിച്ചത്",
 
     // Grassroots

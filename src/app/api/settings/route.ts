@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { verifySession } from '@/lib/auth'
 
 export async function GET() {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const settings = await db.siteSetting.findMany({
       orderBy: { key: 'asc' },
@@ -14,12 +18,12 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await request.json()
 
-    // Support two formats:
-    // 1. { key: value, ... } - plain object
-    // 2. { settings: [{ key, value }, ...] } - array format from admin UI
     let entries: [string, string][] = []
 
     if (body.settings && Array.isArray(body.settings)) {

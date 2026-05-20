@@ -3,18 +3,29 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String    @id @default(cuid())
+  email     String    @unique
   name      String?
   password  String
-  role      String   @default("admin")
+  role      String    @default("admin")
+  sessions  Session[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model SiteSection {
@@ -60,7 +71,7 @@ model Member {
   phone       String   @default("")
   email       String   @default("")
   imageUrl    String   @default("")
-  category    String   @default("yham") // yham, ham, endorsement
+  category    String   @default("yham")
   order       Int      @default(0)
   visible     Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -81,9 +92,9 @@ model ContactSubmission {
 
 model AnalyticsEvent {
   id        String   @id @default(cuid())
-  eventType String   // page_view, section_view, contact_click, language_change
+  eventType String
   page      String   @default("/")
-  metadata  String   @default("{}") // JSON string for additional data
+  metadata  String   @default("{}")
   userAgent String   @default("")
   ip        String   @default("")
   createdAt DateTime @default(now())

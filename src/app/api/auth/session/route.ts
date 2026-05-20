@@ -1,23 +1,15 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { verifySession } from '@/lib/auth'
 
-// Simple auth verification helper
 export async function GET() {
-  try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('admin_token')?.value
+  const user = await verifySession()
 
-    if (!token) {
-      return NextResponse.json({ authenticated: false }, { status: 401 })
-    }
-
-    // For simplicity, just check if the token exists
-    // In production, verify against proper session store
-    return NextResponse.json({
-      authenticated: true,
-      user: { email: 'admin@yham.org', name: 'YHAM Admin', role: 'admin' },
-    })
-  } catch {
+  if (!user) {
     return NextResponse.json({ authenticated: false }, { status: 401 })
   }
+
+  return NextResponse.json({
+    authenticated: true,
+    user,
+  })
 }

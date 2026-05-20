@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { verifySession } from '@/lib/auth'
 
 export async function GET() {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const now = new Date()
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-    // Total page views
     const totalViews = await db.analyticsEvent.count({
       where: { eventType: 'page_view' },
     })
 
-    // Today's views
     const todayViews = await db.analyticsEvent.count({
       where: {
         eventType: 'page_view',
@@ -21,7 +23,6 @@ export async function GET() {
       },
     })
 
-    // Last 7 days views
     const weekViews = await db.analyticsEvent.count({
       where: {
         eventType: 'page_view',
@@ -29,7 +30,6 @@ export async function GET() {
       },
     })
 
-    // Last 30 days views
     const monthViews = await db.analyticsEvent.count({
       where: {
         eventType: 'page_view',
@@ -37,7 +37,6 @@ export async function GET() {
       },
     })
 
-    // Daily views for last 30 days
     const dailyViews = await db.analyticsEvent.findMany({
       where: {
         eventType: 'page_view',
@@ -46,7 +45,6 @@ export async function GET() {
       select: { createdAt: true },
     })
 
-    // Group by day → array format for recharts
     const viewsByDayMap: Record<string, number> = {}
     dailyViews.forEach((event) => {
       const day = new Date(event.createdAt).toISOString().split('T')[0]
@@ -56,7 +54,6 @@ export async function GET() {
       .map(([date, views]) => ({ date, views }))
       .sort((a, b) => a.date.localeCompare(b.date))
 
-    // Section views breakdown → array format for recharts
     const sectionViews = await db.analyticsEvent.findMany({
       where: { eventType: 'section_view' },
       select: { metadata: true },
@@ -73,7 +70,6 @@ export async function GET() {
       .map(([section, views]) => ({ section, views }))
       .sort((a, b) => b.views - a.views)
 
-    // Language changes → array format for recharts
     const languageEvents = await db.analyticsEvent.findMany({
       where: { eventType: 'language_change' },
       select: { metadata: true },
@@ -90,20 +86,13 @@ export async function GET() {
       .map(([language, count]) => ({ language, count }))
       .sort((a, b) => b.count - a.count)
 
-    // Contact clicks
     const contactClicks = await db.analyticsEvent.count({
       where: { eventType: 'contact_click' },
     })
 
     return NextResponse.json({
-      totalViews,
-      todayViews,
-      weekViews,
-      monthViews,
-      viewsByDay,
-      sectionBreakdown,
-      languageBreakdown,
-      contactClicks,
+      totalViews, todayViews, weekViews, monthViews,
+      viewsByDay, sectionBreakdown, languageBreakdown, contactClicks,
     })
   } catch (error) {
     console.error('Error fetching analytics:', error)

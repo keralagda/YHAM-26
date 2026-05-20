@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { translations } from '@/lib/translations'
+import { verifySession } from '@/lib/auth'
 
 const SECTION_DEFINITIONS = [
   {
@@ -8,7 +9,7 @@ const SECTION_DEFINITIONS = [
     label: 'Hero Banner',
     order: 0,
     sectionType: 'hero',
-    translationKeys: ['heroSubtitle', 'heroSlogan', 'heroTagline', 'heroCta', 'heroLearnMore'],
+    translationKeys: ['heroSubtitle', 'heroSlogan', 'heroTagline', 'heroCta', 'heroLearnMore', 'heroBannerImage'],
   },
   {
     sectionKey: 'vision',
@@ -22,14 +23,14 @@ const SECTION_DEFINITIONS = [
     label: 'HAM Leadership',
     order: 2,
     sectionType: 'leadership',
-    translationKeys: ['hamLeadershipTitle', 'hamPatron', 'hamPresident', 'hamPatronName', 'hamPresidentName'],
+    translationKeys: ['hamLeadershipTitle', 'hamPatron', 'hamPresident', 'hamPatronName', 'hamPresidentName', 'hamPatronImage', 'hamPresidentImage'],
   },
   {
     sectionKey: 'yham-leadership',
     label: 'YHAM Leadership',
     order: 3,
     sectionType: 'leadership',
-    translationKeys: ['yhamLeadershipTitle', 'youthPresident', 'youthVicePresident', 'youthGenSecretary', 'youthGenSecretaryRole', 'youthPresidentName', 'youthVicePresidentName', 'youthGenSecretaryName'],
+    translationKeys: ['yhamLeadershipTitle', 'youthPresident', 'youthVicePresident', 'youthGenSecretary', 'youthGenSecretaryRole', 'youthPresidentName', 'youthVicePresidentName', 'youthGenSecretaryName', 'youthPresidentImage', 'youthVicePresidentImage', 'youthGenSecretaryImage'],
   },
   {
     sectionKey: 'grassroots',
@@ -76,8 +77,10 @@ const SECTION_DEFINITIONS = [
 ]
 
 export async function POST() {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
-    // Clear existing sections
     await db.siteSection.deleteMany({})
 
     const sections = []
@@ -115,6 +118,9 @@ export async function POST() {
 }
 
 export async function DELETE() {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     await db.siteSection.deleteMany({})
     return NextResponse.json({ success: true, message: 'All sections deleted' })

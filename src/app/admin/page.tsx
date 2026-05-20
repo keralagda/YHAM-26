@@ -135,6 +135,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
+import { ImageUploader } from '@/components/ui/image-uploader'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -236,7 +237,7 @@ const LANGUAGE_CONFIG = [
   { key: 'ml', label: 'Malayalam', flag: '🏛️' },
 ] as const
 
-const MEDIA_CATEGORIES = ['hero', 'leaders', 'youth', 'grassroots', 'general'] as const
+const MEDIA_CATEGORIES = ['hero', 'leaders', 'youth', 'grassroots', 'sections', 'general'] as const
 const MEMBER_CATEGORIES = ['yham', 'ham', 'endorsement'] as const
 
 const NAV_ITEMS: { key: AdminPage; label: string; icon: React.ReactNode }[] = [
@@ -294,8 +295,8 @@ function SortableSectionItem({
   section: SiteSection
   isSelected: boolean
   onSelect: () => void
-  onToggleVisible: () => void
-  onDelete: () => void
+  onToggleVisible: () => void | Promise<void>
+  onDelete: () => void | Promise<void>
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id })
   const typeConfig = SECTION_TYPE_CONFIG[section.sectionType] || SECTION_TYPE_CONFIG.content
@@ -795,9 +796,19 @@ function SiteBuilderView() {
 
   const updateContentField = (lang: LanguageKey, key: string, value: string) => {
     setHasChanges(true)
-    if (lang === 'hi') setEditContentHi((prev) => ({ ...prev, [key]: value }))
-    else if (lang === 'en') setEditContentEn((prev) => ({ ...prev, [key]: value }))
-    else setEditContentMl((prev) => ({ ...prev, [key]: value }))
+    
+    // For image/media fields, sync across all languages (images are language-independent)
+    const isMediaKey = /image|photo|banner|avatar|logo|thumbnail/i.test(key)
+    
+    if (isMediaKey) {
+      setEditContentHi((prev) => ({ ...prev, [key]: value }))
+      setEditContentEn((prev) => ({ ...prev, [key]: value }))
+      setEditContentMl((prev) => ({ ...prev, [key]: value }))
+    } else {
+      if (lang === 'hi') setEditContentHi((prev) => ({ ...prev, [key]: value }))
+      else if (lang === 'en') setEditContentEn((prev) => ({ ...prev, [key]: value }))
+      else setEditContentMl((prev) => ({ ...prev, [key]: value }))
+    }
   }
 
   const handleSave = async () => {
@@ -934,12 +945,35 @@ function SiteBuilderView() {
       )
     }
 
+    // Detect image fields by key name
+    const isImageField = (key: string) => /image|photo|banner|avatar|logo|thumbnail/i.test(key)
+
     return (
       <div className="space-y-4">
         {keys.map((key) => (
           <motion.div key={key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.15 }} className="space-y-1.5">
             <Label htmlFor={`${lang}-${key}`} className="text-xs font-medium text-gray-500 uppercase tracking-wider">{key}</Label>
-            {isLongText(content[key]) ? (
+            {isImageField(key) ? (
+              <div className="max-w-xs">
+                <ImageUploader
+                  value={content[key] || ''}
+                  onChange={(url) => updateContentField(lang, key, url)}
+                  folder={`sections/${selectedSection?.sectionKey || 'general'}`}
+                  category="sections"
+                  placeholder="Upload section image"
+                  aspectRatio="aspect-video"
+                />
+                {content[key] && (
+                  <Input
+                    id={`${lang}-${key}`}
+                    value={content[key]}
+                    onChange={(e) => updateContentField(lang, key, e.target.value)}
+                    className="mt-2 bg-white border-gray-200 focus:border-[#FF9933] focus:ring-[#FF9933]/20 text-xs"
+                    placeholder="Or paste URL directly"
+                  />
+                )}
+              </div>
+            ) : isLongText(content[key]) ? (
               <Textarea id={`${lang}-${key}`} value={content[key]} onChange={(e) => updateContentField(lang, key, e.target.value)} rows={3} className="resize-y bg-white border-gray-200 focus:border-[#FF9933] focus:ring-[#FF9933]/20" />
             ) : (
               <Input id={`${lang}-${key}`} value={content[key]} onChange={(e) => updateContentField(lang, key, e.target.value)} className="bg-white border-gray-200 focus:border-[#FF9933] focus:ring-[#FF9933]/20" />
@@ -1207,14 +1241,19 @@ function MediaView() {
         const formData = new FormData()
         formData.append('file', files[i])
         formData.append('alt', files[i].name)
-        formData.append('category', categoryFilter !== 'all' ? categoryFilter : 'general')
+        const cat = categoryFilter !== 'all' ? categoryFilter : 'general'
+        formData.append('category', cat)
+        formData.append('folder', cat)
         const res = await fetch('/api/media/upload', { method: 'POST', body: formData })
-        if (!res.ok) throw new Error()
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Upload failed')
+        }
       }
-      toast({ title: 'Uploaded!', description: `${files.length} file(s) uploaded successfully` })
+      toast({ title: 'Uploaded!', description: `${files.length} file(s) uploaded to Cloudinary` })
       fetchMedia()
-    } catch {
-      toast({ title: 'Error', description: 'Failed to upload file(s)', variant: 'destructive' })
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to upload file(s)', variant: 'destructive' })
     } finally {
       setUploading(false)
     }
@@ -1255,7 +1294,7 @@ function MediaView() {
             {uploading ? <Loader2 className="size-4 animate-spin mr-2" /> : <Upload className="size-4 mr-2" />}
             Upload
           </Button>
-          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleUpload(e.target.files)} />
+          <input ref={fileInputRef} type="file" accept="image/*,video/*,.pdf" multiple className="hidden" onChange={(e) => handleUpload(e.target.files)} />
         </div>
       </div>
 
@@ -1592,7 +1631,7 @@ function MembersView() {
                     <div className="space-y-1.5">
                       <Label className="text-xs">Name ({lang.toUpperCase()})</Label>
                       <Input
-                        value={editMember?.[`name${lang.charAt(0).toUpperCase() + lang.slice(1)}` as keyof Member] || ''}
+                        value={String(editMember?.[`name${lang.charAt(0).toUpperCase() + lang.slice(1)}` as keyof Member] ?? '')}
                         onChange={(e) => setEditMember((prev) => prev ? { ...prev, [`name${lang.charAt(0).toUpperCase() + lang.slice(1)}`]: e.target.value } : prev)}
                         placeholder={`Name in ${lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : 'Malayalam'}`}
                       />
@@ -1600,7 +1639,7 @@ function MembersView() {
                     <div className="space-y-1.5">
                       <Label className="text-xs">Role ({lang.toUpperCase()})</Label>
                       <Input
-                        value={editMember?.[`role${lang.charAt(0).toUpperCase() + lang.slice(1)}` as keyof Member] || ''}
+                        value={String(editMember?.[`role${lang.charAt(0).toUpperCase() + lang.slice(1)}` as keyof Member] ?? '')}
                         onChange={(e) => setEditMember((prev) => prev ? { ...prev, [`role${lang.charAt(0).toUpperCase() + lang.slice(1)}`]: e.target.value } : prev)}
                         placeholder={`Role in ${lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : 'Malayalam'}`}
                       />
@@ -1622,8 +1661,15 @@ function MembersView() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Image URL</Label>
-                <Input value={editMember?.imageUrl || ''} onChange={(e) => setEditMember((prev) => prev ? { ...prev, imageUrl: e.target.value } : prev)} placeholder="https://..." />
+                <Label className="text-xs">Profile Photo</Label>
+                <ImageUploader
+                  value={editMember?.imageUrl || ''}
+                  onChange={(url) => setEditMember((prev) => prev ? { ...prev, imageUrl: url } : prev)}
+                  folder="leaders"
+                  category="leaders"
+                  placeholder="Upload leader photo"
+                  aspectRatio="aspect-square"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Category</Label>

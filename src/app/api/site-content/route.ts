@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { verifySession } from '@/lib/auth'
 
+// Public: anyone can read site content
 export async function GET() {
   try {
     const sections = await db.siteSection.findMany({
@@ -14,6 +16,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await request.json()
     const { sectionKey, label, order, visible, sectionType, contentHi, contentEn, contentMl } = body
@@ -44,6 +49,9 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await request.json()
     const { sections } = body as { sections: { id: string; order: number; visible: boolean }[] }

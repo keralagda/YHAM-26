@@ -85,7 +85,25 @@ export default function Home() {
     return merged
   })()
 
-  const t = (key: string) => dbContent[lang]?.[key] || translations[lang][key] || key
+  const t = (key: string) => {
+    // For image/media fields, try all languages since images are language-independent
+    const isMediaKey = /image|photo|banner|avatar|logo|thumbnail/i.test(key)
+    
+    const dbValue = dbContent[lang]?.[key]
+    if (dbValue) return dbValue
+    
+    // For media keys, try other languages before falling back
+    if (isMediaKey) {
+      const langs: Language[] = ['hi', 'en', 'ml']
+      for (const l of langs) {
+        if (dbContent[l]?.[key]) return dbContent[l][key]
+      }
+      // Return empty string for image fields so fallback images work with ||
+      return ''
+    }
+    
+    return translations[lang][key] || key
+  }
 
   const isSectionVisible = (key: string) => {
     if (Object.keys(sectionVisibility).length === 0) return true
@@ -291,7 +309,7 @@ export default function Home() {
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
-                  src="/hero-banner.png"
+                  src={t('heroBannerImage') || "/hero-banner.png"}
                   alt="Youth Rally"
                   className="w-full h-auto object-cover"
                 />
@@ -344,7 +362,7 @@ export default function Home() {
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl mb-6">
                 <img
-                  src="/ham-leaders.jpg"
+                  src={t('hamPatronImage') || "/ham-leaders.jpg"}
                   alt="HAM Leadership"
                   className="w-full h-auto object-cover"
                 />
@@ -356,13 +374,23 @@ export default function Home() {
                   role={t('hamPatron')}
                   color="saffron"
                   delay={0}
+                  image={t('hamPatronImage')}
                 />
                 <LeaderCard
                   name={t('hamPresidentName')}
                   role={t('hamPresident')}
                   color="green"
                   delay={0.2}
+                  image={t('hamPresidentImage')}
                 />
+              </div>
+              <div className="mt-6 text-center">
+                <Link href="/national-leadership">
+                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 gap-2">
+                    <Users className="size-4" />
+                    View Full National Executive →
+                  </Button>
+                </Link>
               </div>
             </motion.div>
           </div>
@@ -372,37 +400,21 @@ export default function Home() {
       {/* YHAM Leadership Section */}
       {isSectionVisible('yham-leadership') && <SectionWrapper id="leadership" className="bg-gradient-to-b from-[#FFF8F0] to-white">
         <SectionHeader title={t('yhamLeadershipTitle')} icon={<Award className="w-6 h-6" />} />
+        <div className="text-center mb-8">
+          <Badge className="bg-[#138808]/10 text-[#138808] border-[#138808]/20 text-sm px-4 py-1">
+            🌏 {lang === 'hi' ? 'दक्षिण भारत में पार्टी विस्तार हेतु समर्पित' : lang === 'ml' ? 'ദക്ഷിണേന്ത്യയിൽ പാർട്ടി വിപുലീകരണത്തിന് സമർപ്പിതം' : 'Dedicated to Party Expansion in South India'}
+          </Badge>
+        </div>
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Youth President - Kamal Parvez */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0 }}
-            className="md:col-span-1 md:row-span-2"
-          >
-            <Card className="h-full border-2 border-[#FF9933]/30 hover:border-[#FF9933] transition-all hover:shadow-xl overflow-hidden group">
-              <div className="bg-gradient-to-br from-[#FF9933]/20 to-[#FF9933]/5 p-6 flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[#FF9933]/50 shadow-lg mb-4">
-                  <img
-                    src="/youth-leader.png"
-                    alt="Kamal Parvez - Youth President"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="text-xl font-bold text-[#000080]">{t('youthPresidentName')}</h3>
-                <Badge className="mt-2 bg-[#FF9933]/10 text-[#FF9933] border-[#FF9933]/20">
-                  {t('youthPresident')}
-                </Badge>
-                <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-                  <Phone className="w-4 h-4 text-[#138808]" />
-                  <a href="tel:+919431877286" className="hover:text-[#FF9933] transition-colors">
-                    +91-9431877286
-                  </a>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
+          {/* Youth President */}
+          <LeaderCardExtended
+            name={t('youthPresidentName')}
+            role={t('youthPresident')}
+            phone="+91-9431877286"
+            color="saffron"
+            delay={0}
+            image={t('youthPresidentImage') || "/youth-leader.png"}
+          />
 
           {/* Vice President */}
           <LeaderCardExtended
@@ -412,6 +424,7 @@ export default function Home() {
             proposedBy
             color="green"
             delay={0.2}
+            image={t('youthVicePresidentImage')}
           />
 
           {/* General Secretary */}
@@ -422,6 +435,7 @@ export default function Home() {
             proposedBy
             color="navy"
             delay={0.4}
+            image={t('youthGenSecretaryImage')}
           />
         </div>
       </SectionWrapper>}
@@ -947,8 +961,8 @@ function FeatureCard({ icon, title, description, color, delay }: {
   )
 }
 
-function LeaderCard({ name, role, color, delay }: {
-  name: string; role: string; color: 'saffron' | 'green'; delay: number
+function LeaderCard({ name, role, color, delay, image }: {
+  name: string; role: string; color: 'saffron' | 'green'; delay: number; image?: string
 }) {
   const colorMap = {
     saffron: { bg: 'bg-[#FF9933]/20', text: 'text-[#FF9933]', badge: 'bg-[#FF9933]/20 text-[#FF9933] border-[#FF9933]/30' },
@@ -964,6 +978,11 @@ function LeaderCard({ name, role, color, delay }: {
       transition={{ duration: 0.5, delay }}
     >
       <div className={`${c.bg} rounded-xl p-6 text-center backdrop-blur-sm`}>
+        {image && (
+          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/30 shadow-lg mx-auto mb-3">
+            <img src={image} alt={name} className="w-full h-full object-cover" />
+          </div>
+        )}
         <Badge className={`mb-3 ${c.badge}`}>{role}</Badge>
         <h3 className="text-xl font-bold text-white">{name}</h3>
       </div>
@@ -971,8 +990,8 @@ function LeaderCard({ name, role, color, delay }: {
   )
 }
 
-function LeaderCardExtended({ name, role, phone, proposedBy, color, delay }: {
-  name: string; role: string; phone: string; proposedBy?: boolean; color: 'saffron' | 'green' | 'navy'; delay: number
+function LeaderCardExtended({ name, role, phone, proposedBy, color, delay, image }: {
+  name: string; role: string; phone: string; proposedBy?: boolean; color: 'saffron' | 'green' | 'navy'; delay: number; image?: string
 }) {
   const colorMap = {
     saffron: { border: 'border-[#FF9933]/30 hover:border-[#FF9933]', badge: 'bg-[#FF9933]/10 text-[#FF9933] border-[#FF9933]/20' },
@@ -990,9 +1009,15 @@ function LeaderCardExtended({ name, role, phone, proposedBy, color, delay }: {
     >
       <Card className={`h-full border-2 ${c.border} transition-all hover:shadow-lg`}>
         <CardContent className="p-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF9933]/20 via-white to-[#138808]/20 flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-[#000080]" />
-          </div>
+          {image ? (
+            <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-lg mx-auto mb-4">
+              <img src={image} alt={name} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-48 h-48 rounded-full bg-gradient-to-br from-[#FF9933]/20 via-white to-[#138808]/20 flex items-center justify-center mx-auto mb-4">
+              <Users className="w-16 h-16 text-[#000080]" />
+            </div>
+          )}
           <h3 className="text-lg font-bold text-[#000080]">{name}</h3>
           <Badge className={`mt-2 ${c.badge}`}>{role}</Badge>
           {proposedBy && (

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { verifySession } from '@/lib/auth'
 
 export async function GET() {
   try {
@@ -14,6 +15,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await request.json()
     const { nameHi, nameEn, nameMl, roleHi, roleEn, roleMl, phone, email, imageUrl, category, order, visible } = body
@@ -43,6 +47,9 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const body = await request.json()
     const { members } = body as { members: { id: string; order: number; visible: boolean }[] }

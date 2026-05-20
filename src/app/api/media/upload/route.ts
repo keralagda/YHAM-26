@@ -1,43 +1,71 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+import { uploadToCloudinary } from '@/lib/cloudinary'
+import { verifySession } from '@/lib/auth'
+
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+]
+const ALLOWED_VIDEO_TYPES = [
+  'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
+]
+const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES, 'application/pdf']
+
+// Max file size: 10MB for images, 100MB for videos
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024
 
 export async function POST(request: Request) {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const alt = (formData.get('alt') as string) || ''
     const category = (formData.get('category') as string) || 'general'
+    const folder = (formData.get('folder') as string) || 'yham'
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    // Validate MIME type
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: `File type "${file.type}" not allowed.` },
+        { status: 400 }
+      )
+    }
+
+    // Validate file size
+    const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type)
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { error: `File too large. Max ${isVideo ? '100MB' : '10MB'}.` },
+        { status: 400 }
+      )
+    }
+
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Ensure upload directory exists
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads')
-    await mkdir(uploadDir, { recursive: true })
+    // Upload to Cloudinary
+    const result = await uploadToCloudinary(buffer, {
+      folder: `yham/${folder}`,
+      resource_type: isVideo ? 'video' : 'image',
+    })
 
-    // Generate unique filename
-    const ext = path.extname(file.name) || '.jpg'
-    const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`
-    const filePath = path.join(uploadDir, filename)
-
-    await writeFile(filePath, buffer)
-
-    const url = `/uploads/${filename}`
-
+    // Save to database
     const media = await db.media.create({
       data: {
-        filename: file.name,
-        url,
-        mimeType: file.type || 'image/jpeg',
+        filename: file.name.slice(0, 255),
+        url: result.secure_url,
+        mimeType: file.type,
         size: file.size,
-        alt,
-        category,
+        alt: alt.slice(0, 500),
+        category: category.slice(0, 50),
       },
     })
 
