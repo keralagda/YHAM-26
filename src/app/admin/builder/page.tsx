@@ -139,6 +139,7 @@ export default function PageBuilderAdmin() {
   const [showNewPage, setShowNewPage] = useState(false)
   const [showAddBlock, setShowAddBlock] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'page' | 'block'; id: string } | null>(null)
+  const [builderTab, setBuilderTab] = useState<'blocks' | 'themes' | 'templates'>('blocks')
 
   // New page form
   const [newSlug, setNewSlug] = useState('')
@@ -256,7 +257,7 @@ export default function PageBuilderAdmin() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top Bar */}
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+      <header className="bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <Link href="/admin">
             <Button variant="ghost" size="sm" className="gap-2 text-gray-600">
@@ -272,12 +273,11 @@ export default function PageBuilderAdmin() {
         <div className="flex items-center gap-2">
           {selectedPage && (
             <>
-              <Badge variant={selectedPage.published ? 'default' : 'secondary'} className={selectedPage.published ? 'bg-green-600' : ''}>
-                {selectedPage.published ? 'Published' : 'Draft'}
-              </Badge>
-              <Button size="sm" variant="outline" onClick={() => handleUpdatePage({ published: !selectedPage.published })}>
-                {selectedPage.published ? <EyeOff className="size-4 mr-1" /> : <Eye className="size-4 mr-1" />}
-                {selectedPage.published ? 'Unpublish' : 'Publish'}
+              <Button size="sm" variant="outline" className="gap-1.5 text-gray-600" onClick={() => { handleUpdatePage({ published: false }); toast({ title: 'Draft saved' }) }}>
+                <Save className="size-3.5" /> Save Draft
+              </Button>
+              <Button size="sm" className={`gap-1.5 ${selectedPage.published ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white`} onClick={() => handleUpdatePage({ published: !selectedPage.published })}>
+                {selectedPage.published ? <><EyeOff className="size-3.5" /> Unpublish</> : <><Eye className="size-3.5" /> Publish</>}
               </Button>
               <a href={`/p/${selectedPage.slug}`} target="_blank" rel="noopener noreferrer">
                 <Button size="sm" variant="outline" className="gap-1">
@@ -288,6 +288,29 @@ export default function PageBuilderAdmin() {
           )}
         </div>
       </header>
+
+      {/* Sub Header - Tabs */}
+      <div className="bg-white border-b border-gray-100 px-4">
+        <div className="flex items-center gap-1">
+          {([
+            { id: 'blocks' as const, label: 'Blocks', icon: <Layers className="size-3.5" /> },
+            { id: 'themes' as const, label: 'Themes', icon: <Palette className="size-3.5" /> },
+            { id: 'templates' as const, label: 'Templates', icon: <Layout className="size-3.5" /> },
+          ]).map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setBuilderTab(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-all ${
+                builderTab === tab.id
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Panel - Pages List */}
@@ -338,8 +361,10 @@ export default function PageBuilderAdmin() {
           </ScrollArea>
         </aside>
 
-        {/* Center - Block Canvas */}
+        {/* Center - Content based on active tab */}
         <main className="flex-1 overflow-y-auto p-6">
+          {builderTab === 'blocks' && (
+            <>
           {!selectedPage ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <Layout className="size-16 text-gray-200 mb-4" />
@@ -420,6 +445,164 @@ export default function PageBuilderAdmin() {
                   })}
                 </div>
               )}
+            </div>
+          )}
+            </>
+          )}
+
+          {/* Themes Tab */}
+          {builderTab === 'themes' && (
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-lg font-bold text-gray-800 mb-2">Themes</h2>
+              <p className="text-sm text-gray-500 mb-6">Choose a color theme for your page. Click to apply to the selected page.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {THEMES.map(theme => (
+                  <button
+                    key={theme.id}
+                    onClick={() => selectedPage && handleUpdatePage({ theme: theme.id })}
+                    className={`rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg ${selectedPage?.theme === theme.id ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200'}`}
+                  >
+                    <div className="h-24 flex">
+                      <div className="flex-1" style={{ backgroundColor: theme.colors[0] }} />
+                      <div className="flex-1" style={{ backgroundColor: theme.colors[1] }} />
+                    </div>
+                    <div className="p-3 bg-white text-center">
+                      <p className="text-sm font-medium text-gray-700">{theme.label}</p>
+                      {selectedPage?.theme === theme.id && <Badge className="mt-1 bg-red-100 text-red-700 text-[10px]">Active</Badge>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <Separator className="my-8" />
+              <h3 className="text-base font-semibold text-gray-700 mb-4">Theme Preview</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {THEMES.map(theme => (
+                  <Card key={theme.id} className="overflow-hidden">
+                    <div className="p-4 text-white text-center" style={{ backgroundColor: theme.colors[0] }}>
+                      <p className="font-bold">Hero Section</p>
+                      <p className="text-xs opacity-80">Title & CTA area</p>
+                    </div>
+                    <CardContent className="p-4" style={{ backgroundColor: theme.colors[1] }}>
+                      <div className="h-3 w-3/4 rounded bg-gray-300 mb-2" />
+                      <div className="h-2 w-full rounded bg-gray-200 mb-1" />
+                      <div className="h-2 w-2/3 rounded bg-gray-200" />
+                    </CardContent>
+                    <div className="p-2 text-center border-t">
+                      <span className="text-xs text-gray-500">{theme.label}</span>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Templates Tab */}
+          {builderTab === 'templates' && (
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-lg font-bold text-gray-800 mb-2">Page Templates</h2>
+              <p className="text-sm text-gray-500 mb-6">Pre-built page layouts. Click to apply a template to your selected page.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Landing Page */}
+                <Card className={`cursor-pointer hover:shadow-lg transition-all border-2 ${selectedPage?.template === 'landing' ? 'border-red-500' : 'border-gray-200'}`} onClick={() => selectedPage && handleUpdatePage({ template: 'landing' })}>
+                  <div className="p-4 bg-gradient-to-b from-red-50 to-white">
+                    <div className="h-12 bg-red-600 rounded-lg mb-2" />
+                    <div className="h-3 w-3/4 bg-gray-200 rounded mb-1" />
+                    <div className="h-3 w-1/2 bg-gray-200 rounded mb-3" />
+                    <div className="grid grid-cols-3 gap-1">
+                      <div className="h-8 bg-gray-100 rounded" />
+                      <div className="h-8 bg-gray-100 rounded" />
+                      <div className="h-8 bg-gray-100 rounded" />
+                    </div>
+                  </div>
+                  <CardContent className="p-3 text-center border-t">
+                    <p className="font-medium text-sm">Landing Page</p>
+                    <p className="text-[10px] text-gray-400">Hero + sections + CTA</p>
+                  </CardContent>
+                </Card>
+                {/* Full Width */}
+                <Card className={`cursor-pointer hover:shadow-lg transition-all border-2 ${selectedPage?.template === 'fullwidth' ? 'border-red-500' : 'border-gray-200'}`} onClick={() => selectedPage && handleUpdatePage({ template: 'fullwidth' })}>
+                  <div className="p-4 bg-gradient-to-b from-blue-50 to-white">
+                    <div className="h-8 bg-blue-600 rounded-lg mb-2" />
+                    <div className="grid grid-cols-4 gap-1 mb-2">
+                      <div className="h-12 bg-gray-100 rounded" />
+                      <div className="h-12 bg-gray-100 rounded" />
+                      <div className="h-12 bg-gray-100 rounded" />
+                      <div className="h-12 bg-gray-100 rounded" />
+                    </div>
+                    <div className="grid grid-cols-4 gap-1">
+                      <div className="h-12 bg-gray-100 rounded" />
+                      <div className="h-12 bg-gray-100 rounded" />
+                      <div className="h-12 bg-gray-100 rounded" />
+                      <div className="h-12 bg-gray-100 rounded" />
+                    </div>
+                  </div>
+                  <CardContent className="p-3 text-center border-t">
+                    <p className="font-medium text-sm">Full Width</p>
+                    <p className="text-[10px] text-gray-400">Grid-heavy, no sidebar</p>
+                  </CardContent>
+                </Card>
+                {/* Standard */}
+                <Card className={`cursor-pointer hover:shadow-lg transition-all border-2 ${selectedPage?.template === 'default' ? 'border-red-500' : 'border-gray-200'}`} onClick={() => selectedPage && handleUpdatePage({ template: 'default' })}>
+                  <div className="p-4 bg-gradient-to-b from-orange-50 to-white">
+                    <div className="h-6 bg-orange-400 rounded-lg mb-2" />
+                    <div className="h-3 w-full bg-gray-200 rounded mb-1" />
+                    <div className="h-3 w-full bg-gray-200 rounded mb-1" />
+                    <div className="h-3 w-2/3 bg-gray-200 rounded mb-3" />
+                    <div className="h-3 w-full bg-gray-200 rounded mb-1" />
+                    <div className="h-3 w-full bg-gray-200 rounded" />
+                  </div>
+                  <CardContent className="p-3 text-center border-t">
+                    <p className="font-medium text-sm">Standard Page</p>
+                    <p className="text-[10px] text-gray-400">Content-focused layout</p>
+                  </CardContent>
+                </Card>
+                {/* Leadership */}
+                <Card className="cursor-pointer hover:shadow-lg transition-all border-2 border-gray-200" onClick={() => { if (selectedPage) { handleUpdatePage({ template: 'fullwidth', theme: 'red-white' }) } }}>
+                  <div className="p-4 bg-gradient-to-b from-red-50 to-white">
+                    <div className="h-10 bg-red-700 rounded-lg mb-2" />
+                    <div className="grid grid-cols-4 gap-1">
+                      <div className="h-10 bg-red-100 rounded-full mx-auto w-10" />
+                      <div className="h-10 bg-red-100 rounded-full mx-auto w-10" />
+                      <div className="h-10 bg-red-100 rounded-full mx-auto w-10" />
+                      <div className="h-10 bg-red-100 rounded-full mx-auto w-10" />
+                    </div>
+                  </div>
+                  <CardContent className="p-3 text-center border-t">
+                    <p className="font-medium text-sm">Leadership Page</p>
+                    <p className="text-[10px] text-gray-400">HAM red-white with leader grid</p>
+                  </CardContent>
+                </Card>
+                {/* Campaign */}
+                <Card className="cursor-pointer hover:shadow-lg transition-all border-2 border-gray-200" onClick={() => { if (selectedPage) { handleUpdatePage({ template: 'landing', theme: 'green' }) } }}>
+                  <div className="p-4 bg-gradient-to-b from-green-50 to-white">
+                    <div className="h-12 bg-green-600 rounded-lg mb-2" />
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      <div className="h-6 bg-green-100 rounded text-center"><span className="text-[8px] text-green-700">5</span></div>
+                      <div className="h-6 bg-green-100 rounded text-center"><span className="text-[8px] text-green-700">50+</span></div>
+                      <div className="h-6 bg-green-100 rounded text-center"><span className="text-[8px] text-green-700">10K</span></div>
+                    </div>
+                    <div className="h-8 bg-green-600 rounded-lg" />
+                  </div>
+                  <CardContent className="p-3 text-center border-t">
+                    <p className="font-medium text-sm">Campaign Page</p>
+                    <p className="text-[10px] text-gray-400">Stats + CTA focused</p>
+                  </CardContent>
+                </Card>
+                {/* Events */}
+                <Card className="cursor-pointer hover:shadow-lg transition-all border-2 border-gray-200" onClick={() => { if (selectedPage) { handleUpdatePage({ template: 'default', theme: 'navy' }) } }}>
+                  <div className="p-4 bg-gradient-to-b from-indigo-50 to-white">
+                    <div className="h-6 bg-indigo-800 rounded-lg mb-2" />
+                    <div className="space-y-1.5">
+                      <div className="flex gap-2"><div className="w-8 h-8 bg-indigo-100 rounded" /><div className="flex-1"><div className="h-2 bg-gray-200 rounded mb-1" /><div className="h-2 w-2/3 bg-gray-200 rounded" /></div></div>
+                      <div className="flex gap-2"><div className="w-8 h-8 bg-indigo-100 rounded" /><div className="flex-1"><div className="h-2 bg-gray-200 rounded mb-1" /><div className="h-2 w-2/3 bg-gray-200 rounded" /></div></div>
+                    </div>
+                  </div>
+                  <CardContent className="p-3 text-center border-t">
+                    <p className="font-medium text-sm">Events / News</p>
+                    <p className="text-[10px] text-gray-400">Timeline + cards layout</p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
         </main>
