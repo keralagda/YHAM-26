@@ -47,6 +47,9 @@ export default function Home() {
   const [siteSections, setSiteSections] = useState<SiteSectionData[]>([])
   const [sectionVisibility, setSectionVisibility] = useState<Record<string, boolean>>({})
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null)
+  const [yhamMembers, setYhamMembers] = useState<any[]>([])
+  const [hamMembers, setHamMembers] = useState<any[]>([])
+
   // Fetch site sections from API on mount
   useEffect(() => {
     fetch('/api/site-content')
@@ -57,7 +60,18 @@ export default function Home() {
         sections.forEach(s => { vis[s.sectionKey] = s.visible })
         setSectionVisibility(vis)
       })
-      .catch(() => {}) // fallback to translations
+      .catch(() => {})
+  }, [])
+
+  // Fetch members from database
+  useEffect(() => {
+    fetch('/api/members')
+      .then(res => res.ok ? res.json() : [])
+      .then((members: any[]) => {
+        setYhamMembers(members.filter((m: any) => m.category === 'yham' && m.visible))
+        setHamMembers(members.filter((m: any) => m.category === 'ham' && m.visible))
+      })
+      .catch(() => {})
   }, [])
 
   // Track page view
@@ -406,51 +420,23 @@ export default function Home() {
           </Badge>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          {/* National Chief General Secretary - Rajesh Pandey */}
-          <LeaderCardExtended
-            name={lang === 'hi' ? 'राजेश पाण्डेय' : lang === 'ml' ? 'രാജേഷ് പാണ്ഡേ' : 'Rajesh Pandey'}
-            role={lang === 'hi' ? 'राष्ट्रीय प्रधान महासचिव, HAM (S)' : lang === 'ml' ? 'ദേശീയ ചീഫ് ജനറൽ സെക്രട്ടറി, HAM (S)' : 'National Chief General Secretary, HAM (S)'}
-            phone="+91-9431877286"
-            color="saffron"
-            delay={0}
-            image="https://ham.org.in/wp-content/uploads/2024/08/%E0%A4%B6%E0%A5%8D%E0%A4%B0%E0%A5%80-%E0%A4%B0%E0%A4%BE%E0%A4%9C%E0%A5%87%E0%A4%B6-%E0%A4%95%E0%A5%81%E0%A4%AE%E0%A4%BE%E0%A4%B0-%E0%A4%AA%E0%A4%BE%E0%A4%A3%E0%A5%8D%E0%A4%A1%E0%A5%87%E0%A4%AF.png"
-            onImageClick={(src, name) => setLightbox({ src, name })}
-          />
-
-          {/* Youth President */}
-          <LeaderCardExtended
-            name={t('youthPresidentName')}
-            role={t('youthPresident')}
-            phone="+91-9431877286"
-            color="saffron"
-            delay={0.1}
-            image={t('youthPresidentImage') || "/youth-leader.png"}
-            onImageClick={(src, name) => setLightbox({ src, name })}
-          />
-
-          {/* Vice President */}
-          <LeaderCardExtended
-            name={t('youthVicePresidentName')}
-            role={t('youthVicePresident')}
-            phone="+91-8606287838"
-            proposedBy
-            color="green"
-            delay={0.2}
-            image={t('youthVicePresidentImage')}
-            onImageClick={(src, name) => setLightbox({ src, name })}
-          />
-
-          {/* General Secretary */}
-          <LeaderCardExtended
-            name={t('youthGenSecretaryName')}
-            role={t('youthGenSecretaryRole')}
-            phone="+91-7012693572"
-            proposedBy
-            color="navy"
-            delay={0.3}
-            image={t('youthGenSecretaryImage')}
-            onImageClick={(src, name) => setLightbox({ src, name })}
-          />
+          {yhamMembers.map((member, idx) => {
+            const name = lang === 'hi' ? member.nameHi : lang === 'ml' ? member.nameMl : member.nameEn
+            const role = lang === 'hi' ? member.roleHi : lang === 'ml' ? member.roleMl : member.roleEn
+            const colors: ('saffron' | 'green' | 'navy')[] = ['saffron', 'green', 'navy', 'saffron']
+            return (
+              <LeaderCardExtended
+                key={member.id}
+                name={name}
+                role={role}
+                phone={member.phone || ''}
+                color={colors[idx % colors.length]}
+                delay={idx * 0.1}
+                image={member.imageUrl}
+                onImageClick={(src, n) => setLightbox({ src, name: n })}
+              />
+            )
+          })}
         </div>
       </SectionWrapper>}
 
