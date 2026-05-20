@@ -818,20 +818,24 @@ function LeadersBlockEditor({ content, settings, updateContent, updateSettings }
         ) : (
           <div className="space-y-1.5 max-h-64 overflow-y-auto">
             {members.map((m: any) => (
-              <div key={m.id} className="flex items-center gap-2 p-2 rounded-lg border border-gray-100 hover:border-gray-200 bg-white">
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 shrink-0">
-                  {m.imageUrl ? <img src={m.imageUrl} alt="" className="w-full h-full object-cover" /> : <Users className="w-full h-full p-1.5 text-gray-300" />}
+              <div key={m.id} className="p-2 rounded-lg border border-gray-100 hover:border-red-200 bg-white">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 shrink-0">
+                    {m.imageUrl ? <img src={m.imageUrl} alt="" className="w-full h-full object-cover" /> : <Users className="w-full h-full p-1.5 text-gray-300" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{m.nameEn}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{m.roleEn}</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate">{m.nameEn}</p>
-                  <p className="text-[10px] text-gray-400 truncate">{m.roleEn}</p>
+                <div className="flex gap-1.5 mt-2">
+                  <Button size="sm" variant="outline" className="flex-1 h-6 text-[10px]" onClick={() => setEditingMember({ ...m })}>
+                    <FileText className="size-3 mr-1" /> Edit
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-6 text-[10px] text-red-500 border-red-200 hover:bg-red-50" onClick={() => handleDeleteMember(m.id)}>
+                    <Trash2 className="size-3" />
+                  </Button>
                 </div>
-                <Button size="icon" variant="ghost" className="size-6" onClick={() => setEditingMember({ ...m })}>
-                  <FileText className="size-3" />
-                </Button>
-                <Button size="icon" variant="ghost" className="size-6 text-red-500" onClick={() => handleDeleteMember(m.id)}>
-                  <Trash2 className="size-3" />
-                </Button>
               </div>
             ))}
           </div>
