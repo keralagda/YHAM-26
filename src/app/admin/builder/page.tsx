@@ -6,7 +6,10 @@ import {
   Plus, Trash2, Save, Eye, EyeOff, GripVertical, ArrowLeft,
   FileText, Image, Users, Video, Layout, Type, Phone, BarChart3,
   Columns, Minus, Globe, Loader2, ExternalLink, Copy, Settings2,
-  Palette, PanelLeft, Megaphone,
+  Palette, PanelLeft, Megaphone, Quote, MapPin, Calendar, Clock,
+  Star, Heart, Share2, List, Table, Newspaper, Award, Bookmark,
+  MessageSquare, Download, ChevronLeft, ChevronRight, Filter,
+  Layers, Zap, Shield, Target, TrendingUp, Briefcase, Building2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -63,16 +66,52 @@ interface BlockData {
 // ─── Block Type Registry ─────────────────────────────────────────────────────
 
 const BLOCK_TYPES = [
-  { type: 'hero', label: 'Hero Banner', icon: <Megaphone className="size-4" />, category: 'layout', description: 'Full-width hero with title, subtitle, and CTA' },
-  { type: 'text', label: 'Text Content', icon: <Type className="size-4" />, category: 'content', description: 'Rich text block with heading and body' },
-  { type: 'leaders', label: 'Leader Cards', icon: <Users className="size-4" />, category: 'leadership', description: 'Grid of leader/member cards with photos' },
-  { type: 'gallery', label: 'Image Gallery', icon: <Image className="size-4" />, category: 'media', description: 'Grid or carousel of images' },
-  { type: 'video', label: 'Video Embed', icon: <Video className="size-4" />, category: 'media', description: 'YouTube or uploaded video' },
-  { type: 'cta', label: 'Call to Action', icon: <Phone className="size-4" />, category: 'layout', description: 'Action section with buttons and contact info' },
-  { type: 'stats', label: 'Statistics', icon: <BarChart3 className="size-4" />, category: 'content', description: 'Number counters and achievements' },
+  // Layout
+  { type: 'hero', label: 'Hero Banner', icon: <Megaphone className="size-4" />, category: 'layout', description: 'Full-width hero with title, subtitle, CTA and background image' },
+  { type: 'cta', label: 'Call to Action', icon: <Phone className="size-4" />, category: 'layout', description: 'Action section with buttons, phone, email' },
   { type: 'columns', label: 'Columns', icon: <Columns className="size-4" />, category: 'layout', description: '2 or 3 column layout with content' },
-  { type: 'spacer', label: 'Spacer', icon: <Minus className="size-4" />, category: 'layout', description: 'Vertical spacing between blocks' },
-  { type: 'contact', label: 'Contact Form', icon: <FileText className="size-4" />, category: 'content', description: 'Contact form with fields' },
+  { type: 'spacer', label: 'Spacer / Divider', icon: <Minus className="size-4" />, category: 'layout', description: 'Vertical spacing or horizontal divider' },
+  { type: 'banner', label: 'Announcement Banner', icon: <Zap className="size-4" />, category: 'layout', description: 'Highlighted announcement or news strip' },
+  // Content
+  { type: 'text', label: 'Text / Heading', icon: <Type className="size-4" />, category: 'content', description: 'Rich text block with heading and body' },
+  { type: 'features', label: 'Feature Grid', icon: <Layers className="size-4" />, category: 'content', description: 'Icon + title + description feature cards' },
+  { type: 'accordion', label: 'FAQ / Accordion', icon: <List className="size-4" />, category: 'content', description: 'Expandable Q&A or collapsible sections' },
+  { type: 'timeline', label: 'Timeline', icon: <Clock className="size-4" />, category: 'content', description: 'Chronological events or milestones' },
+  { type: 'stats', label: 'Statistics / Counters', icon: <BarChart3 className="size-4" />, category: 'content', description: 'Animated number counters' },
+  { type: 'quote', label: 'Testimonial / Quote', icon: <Quote className="size-4" />, category: 'content', description: 'Quote with author photo and name' },
+  { type: 'table', label: 'Data Table', icon: <Table className="size-4" />, category: 'content', description: 'Structured data in rows and columns' },
+  // Leadership & People
+  { type: 'leaders', label: 'Leader Cards', icon: <Users className="size-4" />, category: 'people', description: 'Grid of leader/member cards with photos' },
+  { type: 'team', label: 'Team Grid', icon: <Award className="size-4" />, category: 'people', description: 'Team members with social links' },
+  { type: 'endorsements', label: 'Endorsements', icon: <Star className="size-4" />, category: 'people', description: 'Supporter endorsements with photos' },
+  // Media
+  { type: 'gallery', label: 'Image Gallery', icon: <Image className="size-4" />, category: 'media', description: 'Grid or masonry image gallery' },
+  { type: 'video', label: 'Video Embed', icon: <Video className="size-4" />, category: 'media', description: 'YouTube, Vimeo or uploaded video' },
+  { type: 'carousel', label: 'Image Carousel', icon: <Layers className="size-4" />, category: 'media', description: 'Sliding image/content carousel' },
+  { type: 'logo-grid', label: 'Logo / Partner Grid', icon: <Building2 className="size-4" />, category: 'media', description: 'Grid of partner/sponsor logos' },
+  // Interactive
+  { type: 'contact', label: 'Contact Form', icon: <FileText className="size-4" />, category: 'interactive', description: 'Contact form with name, email, message' },
+  { type: 'newsletter', label: 'Newsletter Signup', icon: <Newspaper className="size-4" />, category: 'interactive', description: 'Email subscription form' },
+  { type: 'social-links', label: 'Social Media Links', icon: <Share2 className="size-4" />, category: 'interactive', description: 'Social media icon buttons' },
+  { type: 'map', label: 'Map / Location', icon: <MapPin className="size-4" />, category: 'interactive', description: 'Google Maps embed or address card' },
+  { type: 'download', label: 'Download / Document', icon: <Download className="size-4" />, category: 'interactive', description: 'Downloadable file with description' },
+  // Political / Party
+  { type: 'manifesto', label: 'Manifesto / Policy', icon: <Shield className="size-4" />, category: 'political', description: 'Policy points with icons' },
+  { type: 'events', label: 'Events / Calendar', icon: <Calendar className="size-4" />, category: 'political', description: 'Upcoming events with dates' },
+  { type: 'news', label: 'News / Press Release', icon: <Newspaper className="size-4" />, category: 'political', description: 'Latest news cards with dates' },
+  { type: 'achievements', label: 'Achievements', icon: <Target className="size-4" />, category: 'political', description: 'Key achievements with metrics' },
+  { type: 'membership-cta', label: 'Membership Drive', icon: <Heart className="size-4" />, category: 'political', description: 'Join party CTA with benefits' },
+  { type: 'donation', label: 'Donation / Fund', icon: <Briefcase className="size-4" />, category: 'political', description: 'Donation appeal with progress bar' },
+]
+
+const BLOCK_CATEGORIES = [
+  { id: 'all', label: 'All Blocks' },
+  { id: 'layout', label: 'Layout' },
+  { id: 'content', label: 'Content' },
+  { id: 'people', label: 'People' },
+  { id: 'media', label: 'Media' },
+  { id: 'interactive', label: 'Interactive' },
+  { id: 'political', label: 'Political' },
 ]
 
 const THEMES = [
@@ -526,26 +565,12 @@ export default function PageBuilderAdmin() {
 
       {/* Add Block Dialog */}
       <Dialog open={showAddBlock} onOpenChange={setShowAddBlock}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Add Block</DialogTitle>
-            <DialogDescription>Choose a block type to add to your page.</DialogDescription>
+            <DialogDescription>Choose a widget to add to your page. {BLOCK_TYPES.length} blocks available.</DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 py-4">
-            {BLOCK_TYPES.map(bt => (
-              <button
-                key={bt.type}
-                onClick={() => handleAddBlock(bt.type)}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 hover:border-red-300 hover:bg-red-50 transition-all text-center group"
-              >
-                <div className="p-3 rounded-lg bg-gray-100 group-hover:bg-red-100 transition-colors">
-                  {bt.icon}
-                </div>
-                <span className="text-sm font-medium text-gray-700">{bt.label}</span>
-                <span className="text-[10px] text-gray-400">{bt.description}</span>
-              </button>
-            ))}
-          </div>
+          <AddBlockPanel onAdd={(type) => { handleAddBlock(type) }} />
         </DialogContent>
       </Dialog>
 
@@ -719,6 +744,89 @@ function BlockEditor({ block, onSave, saving }: { block: BlockData; onSave: (con
         {saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Save className="size-4 mr-1" />}
         {saving ? 'Saving...' : 'Save Block'}
       </Button>
+    </div>
+  )
+}
+
+// ─── Add Block Panel with Categories & Pagination ────────────────────────────
+
+function AddBlockPanel({ onAdd }: { onAdd: (type: string) => void }) {
+  const [activeCategory, setActiveCategory] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(0)
+  const perPage = 12
+
+  const filtered = BLOCK_TYPES.filter(bt => {
+    const matchesCategory = activeCategory === 'all' || bt.category === activeCategory
+    const matchesSearch = !searchQuery || bt.label.toLowerCase().includes(searchQuery.toLowerCase()) || bt.description.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
+
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated = filtered.slice(page * perPage, (page + 1) * perPage)
+
+  return (
+    <div className="flex flex-col gap-3 flex-1 min-h-0">
+      {/* Search */}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search blocks..."
+          value={searchQuery}
+          onChange={e => { setSearchQuery(e.target.value); setPage(0) }}
+          className="w-full px-3 py-2 pl-9 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-red-300"
+        />
+        <Filter className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      </div>
+
+      {/* Category Tabs */}
+      <div className="flex gap-1.5 flex-wrap">
+        {BLOCK_CATEGORIES.map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => { setActiveCategory(cat.id); setPage(0) }}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              activeCategory === cat.id
+                ? 'bg-red-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 flex-1 overflow-y-auto">
+        {paginated.map(bt => (
+          <button
+            key={bt.type}
+            onClick={() => onAdd(bt.type)}
+            className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-gray-200 hover:border-red-300 hover:bg-red-50 transition-all text-center group"
+          >
+            <div className="p-2.5 rounded-lg bg-gray-100 group-hover:bg-red-100 transition-colors">
+              {bt.icon}
+            </div>
+            <span className="text-xs font-medium text-gray-700 leading-tight">{bt.label}</span>
+            <span className="text-[9px] text-gray-400 leading-tight line-clamp-2">{bt.description}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-xs text-gray-400">{filtered.length} blocks • Page {page + 1} of {totalPages}</span>
+          <div className="flex gap-1">
+            <Button size="icon" variant="outline" className="size-7" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+              <ChevronLeft className="size-3.5" />
+            </Button>
+            <Button size="icon" variant="outline" className="size-7" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+              <ChevronRight className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
