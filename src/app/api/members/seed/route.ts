@@ -7,10 +7,8 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const existing = await db.member.count()
-    if (existing > 0) {
-      return NextResponse.json({ message: 'Members already exist. Delete first to re-seed.', count: existing })
-    }
+    // Delete existing and re-seed for a clean state
+    await db.member.deleteMany({})
 
     const members = [
       // HAM National Leadership

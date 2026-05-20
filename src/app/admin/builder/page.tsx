@@ -809,7 +809,12 @@ function LeadersBlockEditor({ content, settings, updateContent, updateSettings }
         {loadingMembers ? (
           <div className="py-4 text-center"><Loader2 className="size-4 animate-spin mx-auto text-gray-400" /></div>
         ) : members.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-3">No members in this category</p>
+          <div className="text-center py-3">
+            <p className="text-xs text-gray-400 mb-2">No members in "{category}" category</p>
+            <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={async () => { await fetch('/api/members/seed', { method: 'POST' }); fetchMembers() }}>
+              Seed Default Members
+            </Button>
+          </div>
         ) : (
           <div className="space-y-1.5 max-h-64 overflow-y-auto">
             {members.map((m: any) => (

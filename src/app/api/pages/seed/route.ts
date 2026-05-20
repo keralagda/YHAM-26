@@ -11,10 +11,9 @@ export async function POST() {
     await db.block.deleteMany({})
     await db.page.deleteMany({})
 
-    // Also seed members if none exist
-    const memberCount = await db.member.count()
-    if (memberCount === 0) {
-      const members = [
+    // Also seed members
+    await db.member.deleteMany({})
+    const members = [
         { nameHi: 'जीतन राम मांझी', nameEn: 'Jitan Ram Manjhi', nameMl: 'ജിതൻ റാം മാഞ്ചി', roleHi: 'मुख्य संरक्षक', roleEn: 'Chief Patron', roleMl: 'മുഖ്യ രക്ഷാധികാരി', phone: '', email: '', imageUrl: 'https://ham.org.in/wp-content/uploads/2024/07/Jitan-Ram-Manjhi.png', category: 'ham', order: 0, visible: true },
         { nameHi: 'संतोष कुमार सुमन', nameEn: 'Santosh Kumar Suman', nameMl: 'സന്തോഷ് കുമാർ സുമൻ', roleHi: 'राष्ट्रीय अध्यक्ष', roleEn: 'National President', roleMl: 'ദേശീയ അധ്യക്ഷൻ', phone: '', email: '', imageUrl: '', category: 'ham', order: 1, visible: true },
         { nameHi: 'राजेश कुमार पाण्डेय', nameEn: 'Rajesh Kumar Pandey', nameMl: 'രാജേഷ് കുമാർ പാണ്ഡേ', roleHi: 'राष्ट्रीय प्रधान महासचिव', roleEn: 'National Chief General Secretary', roleMl: 'ദേശീയ ചീഫ് ജനറൽ സെക്രട്ടറി', phone: '+919431877286', email: '', imageUrl: 'https://ham.org.in/wp-content/uploads/2024/08/%E0%A4%B6%E0%A5%8D%E0%A4%B0%E0%A5%80-%E0%A4%B0%E0%A4%BE%E0%A4%9C%E0%A5%87%E0%A4%B6-%E0%A4%95%E0%A5%81%E0%A4%AE%E0%A4%BE%E0%A4%B0-%E0%A4%AA%E0%A4%BE%E0%A4%A3%E0%A5%8D%E0%A4%A1%E0%A5%87%E0%A4%AF.png', category: 'ham', order: 2, visible: true },
@@ -30,7 +29,6 @@ export async function POST() {
         { nameHi: 'अनीस बी', nameEn: 'Anees B', nameMl: 'അനീസ് ബി', roleHi: 'संगठनात्मक - YHAM (दक्षिण भारत)', roleEn: 'Organizational - YHAM (South India)', roleMl: 'ഓർഗനൈസേഷണൽ - YHAM (ദക്ഷിണേന്ത്യ)', phone: '+917012693572', email: '', imageUrl: '', category: 'yham', order: 3, visible: true },
       ]
       for (const m of members) { await db.member.create({ data: m }) }
-    }
 
     // ─── HOME PAGE ─────────────────────────────────────────────────────────
     const homePage = await db.page.create({
