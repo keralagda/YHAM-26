@@ -36,3 +36,55 @@ model SiteSetting {
   key   String @unique
   value String @default("")
 }
+
+model Media {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  mimeType  String   @default("image/jpeg")
+  size      Int      @default(0)
+  alt       String   @default("")
+  category  String   @default("general")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Member {
+  id          String   @id @default(cuid())
+  nameHi      String
+  nameEn      String
+  nameMl      String
+  roleHi      String
+  roleEn      String
+  roleMl      String
+  phone       String   @default("")
+  email       String   @default("")
+  imageUrl    String   @default("")
+  category    String   @default("yham") // yham, ham, endorsement
+  order       Int      @default(0)
+  visible     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String   @default("")
+  subject   String   @default("")
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  eventType String   // page_view, section_view, contact_click, language_change
+  page      String   @default("/")
+  metadata  String   @default("{}") // JSON string for additional data
+  userAgent String   @default("")
+  ip        String   @default("")
+  createdAt DateTime @default(now())
+}

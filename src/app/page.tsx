@@ -60,6 +60,15 @@ export default function Home() {
       .catch(() => {}) // fallback to translations
   }, [])
 
+  // Track page view
+  useEffect(() => {
+    fetch('/api/analytics/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventType: 'page_view', page: '/', metadata: {} }),
+    }).catch(() => {})
+  }, [])
+
   // Build a merged translation: DB content overrides hardcoded translations
   const dbContent = (() => {
     const merged: Record<Language, Record<string, string>> = { hi: {}, en: {}, ml: {} }
@@ -168,7 +177,7 @@ export default function Home() {
                       {(Object.keys(langLabels) as Language[]).map((l) => (
                         <button
                           key={l}
-                          onClick={() => { setLang(l); setShowLangMenu(false) }}
+                          onClick={() => { setLang(l); setShowLangMenu(false); fetch('/api/analytics/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventType: 'language_change', page: '/', metadata: { language: l } }) }).catch(() => {}) }}
                           className={`block w-full px-5 py-3 text-sm text-left hover:bg-[#FF9933]/10 transition-colors ${
                             lang === l ? 'bg-[#FF9933]/10 text-[#FF9933] font-semibold' : 'text-gray-700'
                           }`}
@@ -711,6 +720,71 @@ export default function Home() {
           </motion.div>
         </div>
       </section>}
+
+      {/* Contact Form Section */}
+      <section className="bg-gradient-to-b from-white to-gray-50 py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">{t('navContact')}</h2>
+            <p className="text-gray-500 mt-2">Get in touch with us</p>
+          </div>
+          <Card className="shadow-lg border-gray-200">
+            <CardContent className="p-6">
+              <form onSubmit={async (e) => {
+                e.preventDefault()
+                const formData = new FormData(e.currentTarget)
+                const data = {
+                  name: formData.get('name') as string,
+                  email: formData.get('email') as string,
+                  phone: formData.get('phone') as string || '',
+                  subject: formData.get('subject') as string || '',
+                  message: formData.get('message') as string,
+                }
+                if (!data.name || !data.email || !data.message) return
+                try {
+                  await fetch('/api/contacts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                  })
+                  ;(e.target as HTMLFormElement).reset()
+                  alert('Thank you for your message! We will get back to you soon.')
+                } catch {
+                  alert('Failed to send message. Please try again.')
+                }
+              }} className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Name *</label>
+                    <input name="name" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF9933]/20 focus:border-[#FF9933] outline-none" placeholder="Your name" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Email *</label>
+                    <input name="email" type="email" required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF9933]/20 focus:border-[#FF9933] outline-none" placeholder="your@email.com" />
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Phone</label>
+                    <input name="phone" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF9933]/20 focus:border-[#FF9933] outline-none" placeholder="+91..." />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Subject</label>
+                    <input name="subject" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF9933]/20 focus:border-[#FF9933] outline-none" placeholder="Subject" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Message *</label>
+                  <textarea name="message" required rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF9933]/20 focus:border-[#FF9933] outline-none resize-y" placeholder="Your message..." />
+                </div>
+                <Button type="submit" className="w-full sm:w-auto" style={{ backgroundColor: '#FF9933', color: '#000' }}>
+                  Send Message
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="bg-[#000080] text-white mt-auto">
