@@ -46,7 +46,7 @@ export default function Home() {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [siteSections, setSiteSections] = useState<SiteSectionData[]>([])
   const [sectionVisibility, setSectionVisibility] = useState<Record<string, boolean>>({})
-
+  const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null)
   // Fetch site sections from API on mount
   useEffect(() => {
     fetch('/api/site-content')
@@ -405,15 +405,27 @@ export default function Home() {
             🌏 {lang === 'hi' ? 'दक्षिण भारत में पार्टी विस्तार हेतु समर्पित' : lang === 'ml' ? 'ദക്ഷിണേന്ത്യയിൽ പാർട്ടി വിപുലീകരണത്തിന് സമർപ്പിതം' : 'Dedicated to Party Expansion in South India'}
           </Badge>
         </div>
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          {/* National Chief General Secretary - Rajesh Pandey */}
+          <LeaderCardExtended
+            name={lang === 'hi' ? 'राजेश पाण्डेय' : lang === 'ml' ? 'രാജേഷ് പാണ്ഡേ' : 'Rajesh Pandey'}
+            role={lang === 'hi' ? 'राष्ट्रीय प्रधान महासचिव, HAM (S)' : lang === 'ml' ? 'ദേശീയ ചീഫ് ജനറൽ സെക്രട്ടറി, HAM (S)' : 'National Chief General Secretary, HAM (S)'}
+            phone="+91-9431877286"
+            color="saffron"
+            delay={0}
+            image="https://ham.org.in/wp-content/uploads/2024/08/%E0%A4%B6%E0%A5%8D%E0%A4%B0%E0%A5%80-%E0%A4%B0%E0%A4%BE%E0%A4%9C%E0%A5%87%E0%A4%B6-%E0%A4%95%E0%A5%81%E0%A4%AE%E0%A4%BE%E0%A4%B0-%E0%A4%AA%E0%A4%BE%E0%A4%A3%E0%A5%8D%E0%A4%A1%E0%A5%87%E0%A4%AF.png"
+            onImageClick={(src, name) => setLightbox({ src, name })}
+          />
+
           {/* Youth President */}
           <LeaderCardExtended
             name={t('youthPresidentName')}
             role={t('youthPresident')}
             phone="+91-9431877286"
             color="saffron"
-            delay={0}
+            delay={0.1}
             image={t('youthPresidentImage') || "/youth-leader.png"}
+            onImageClick={(src, name) => setLightbox({ src, name })}
           />
 
           {/* Vice President */}
@@ -425,6 +437,7 @@ export default function Home() {
             color="green"
             delay={0.2}
             image={t('youthVicePresidentImage')}
+            onImageClick={(src, name) => setLightbox({ src, name })}
           />
 
           {/* General Secretary */}
@@ -434,8 +447,9 @@ export default function Home() {
             phone="+91-7012693572"
             proposedBy
             color="navy"
-            delay={0.4}
+            delay={0.3}
             image={t('youthGenSecretaryImage')}
+            onImageClick={(src, name) => setLightbox({ src, name })}
           />
         </div>
       </SectionWrapper>}
@@ -868,6 +882,43 @@ export default function Home() {
         </div>
       </footer>
 
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setLightbox(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative max-w-lg w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={lightbox.src}
+                alt={lightbox.name}
+                className="w-full h-auto rounded-2xl shadow-2xl"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent rounded-b-2xl p-4">
+                <p className="text-white font-semibold text-lg text-center">{lightbox.name}</p>
+              </div>
+              <button
+                onClick={() => setLightbox(null)}
+                className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-gray-800 shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Scroll to top */}
       <AnimatePresence>
         {showScrollTop && (
@@ -990,8 +1041,8 @@ function LeaderCard({ name, role, color, delay, image }: {
   )
 }
 
-function LeaderCardExtended({ name, role, phone, proposedBy, color, delay, image }: {
-  name: string; role: string; phone: string; proposedBy?: boolean; color: 'saffron' | 'green' | 'navy'; delay: number; image?: string
+function LeaderCardExtended({ name, role, phone, proposedBy, color, delay, image, onImageClick }: {
+  name: string; role: string; phone: string; proposedBy?: boolean; color: 'saffron' | 'green' | 'navy'; delay: number; image?: string; onImageClick?: (src: string, name: string) => void
 }) {
   const colorMap = {
     saffron: { border: 'border-[#FF9933]/30 hover:border-[#FF9933]', badge: 'bg-[#FF9933]/10 text-[#FF9933] border-[#FF9933]/20' },
@@ -1010,7 +1061,10 @@ function LeaderCardExtended({ name, role, phone, proposedBy, color, delay, image
       <Card className={`h-full border-2 ${c.border} transition-all hover:shadow-lg`}>
         <CardContent className="p-6 text-center">
           {image ? (
-            <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-lg mx-auto mb-4">
+            <div
+              className="w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-lg mx-auto mb-4 cursor-pointer hover:scale-105 transition-transform"
+              onClick={() => onImageClick?.(image, name)}
+            >
               <img src={image} alt={name} className="w-full h-full object-cover" />
             </div>
           ) : (
