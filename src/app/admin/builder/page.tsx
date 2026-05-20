@@ -260,6 +260,10 @@ export default function PageBuilderAdmin() {
                 <Plus className="size-3" /> New
               </Button>
             </div>
+            <Button size="sm" variant="outline" className="w-full h-7 text-xs gap-1" onClick={async () => { setLoading(true); await fetch('/api/pages/seed', { method: 'POST' }); fetchPages() }}>
+              <Loader2 className={`size-3 ${loading ? 'animate-spin' : 'hidden'}`} />
+              Seed / Reset All Pages
+            </Button>
           </div>
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
