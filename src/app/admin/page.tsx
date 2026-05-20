@@ -2165,9 +2165,18 @@ function CadreView() {
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
-      await fetch(`/api/party-members`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) })
+      await fetch(`/api/party-members/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) })
       setMembers(prev => prev.map(m => m.id === id ? { ...m, status } : m))
       toast({ title: `Status updated to ${status}` })
+    } catch { toast({ title: 'Error', variant: 'destructive' }) }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this member permanently?')) return
+    try {
+      await fetch(`/api/party-members/${id}`, { method: 'DELETE' })
+      setMembers(prev => prev.filter(m => m.id !== id))
+      toast({ title: 'Member deleted' })
     } catch { toast({ title: 'Error', variant: 'destructive' }) }
   }
 
@@ -2233,15 +2242,20 @@ function CadreView() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Select value={m.status} onValueChange={v => handleStatusChange(m.id, v)}>
-                      <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="verified">Verify</SelectItem>
-                        <SelectItem value="active">Activate</SelectItem>
-                        <SelectItem value="suspended">Suspend</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="flex items-center gap-1">
+                      <Select value={m.status} onValueChange={v => handleStatusChange(m.id, v)}>
+                        <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="verified">Verify</SelectItem>
+                          <SelectItem value="active">Activate</SelectItem>
+                          <SelectItem value="suspended">Suspend</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button size="icon" variant="ghost" className="size-7 text-red-500 hover:text-red-700" onClick={() => handleDelete(m.id)}>
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -2257,16 +2271,29 @@ function CadreView() {
 // ─── Blood Bank Admin View ───────────────────────────────────────────────────
 
 function BloodBankAdminView() {
+  const { toast } = useToast()
   const [donors, setDonors] = useState<any[]>([])
   const [requests, setRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const fetchData = () => {
     Promise.all([
       fetch('/api/blood-bank/donors').then(r => r.ok ? r.json() : []),
       fetch('/api/blood-bank/requests').then(r => r.ok ? r.json() : []),
     ]).then(([d, r]) => { setDonors(d); setRequests(r) }).finally(() => setLoading(false))
-  }, [])
+  }
+  useEffect(() => { fetchData() }, [])
+
+  const handleToggleAvailable = async (id: string, available: boolean) => {
+    try { await fetch(`/api/blood-bank/donors/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ available }) }); setDonors(prev => prev.map(d => d.id === id ? { ...d, available } : d)) }
+    catch { toast({ title: 'Error', variant: 'destructive' }) }
+  }
+
+  const handleDeleteDonor = async (id: string) => {
+    if (!confirm('Remove this donor?')) return
+    try { await fetch(`/api/blood-bank/donors/${id}`, { method: 'DELETE' }); setDonors(prev => prev.filter(d => d.id !== id)); toast({ title: 'Removed' }) }
+    catch { toast({ title: 'Error', variant: 'destructive' }) }
+  }
 
   if (loading) return <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto" style={{ color: BRAND_SAFFRON }} /></div>
 
@@ -2281,8 +2308,8 @@ function BloodBankAdminView() {
       <Tabs defaultValue="donors">
         <TabsList><TabsTrigger value="donors">Donors ({donors.length})</TabsTrigger><TabsTrigger value="requests">Requests ({requests.length})</TabsTrigger></TabsList>
         <TabsContent value="donors">
-          <Card className="shadow-sm"><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Blood Group</TableHead><TableHead>Phone</TableHead><TableHead>Location</TableHead><TableHead>Available</TableHead></TableRow></TableHeader><TableBody>
-            {donors.map((d: any) => (<TableRow key={d.id}><TableCell className="font-medium">{d.fullName}</TableCell><TableCell><Badge className="bg-red-600 text-white">{d.bloodGroup}</Badge></TableCell><TableCell>{d.phone}</TableCell><TableCell className="text-sm text-gray-500">{d.city || d.district}, {d.state}</TableCell><TableCell>{d.available ? <Badge className="bg-green-100 text-green-700">Yes</Badge> : <Badge className="bg-gray-100 text-gray-500">No</Badge>}</TableCell></TableRow>))}
+          <Card className="shadow-sm"><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Blood Group</TableHead><TableHead>Phone</TableHead><TableHead>Location</TableHead><TableHead>Available</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader><TableBody>
+            {donors.map((d: any) => (<TableRow key={d.id}><TableCell className="font-medium">{d.fullName}</TableCell><TableCell><Badge className="bg-red-600 text-white">{d.bloodGroup}</Badge></TableCell><TableCell>{d.phone}</TableCell><TableCell className="text-sm text-gray-500">{d.city || d.district}, {d.state}</TableCell><TableCell><Switch checked={d.available} onCheckedChange={v => handleToggleAvailable(d.id, v)} /></TableCell><TableCell><Button size="icon" variant="ghost" className="size-7 text-red-500" onClick={() => handleDeleteDonor(d.id)}><Trash2 className="size-3.5" /></Button></TableCell></TableRow>))}
           </TableBody></Table></Card>
         </TabsContent>
         <TabsContent value="requests">
@@ -2302,9 +2329,19 @@ function GrievancesView() {
   const [grievances, setGrievances] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetch('/api/grievances').then(r => r.ok ? r.json() : []).then(setGrievances).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+  const fetchData = () => { fetch('/api/grievances').then(r => r.ok ? r.json() : []).then(setGrievances).catch(() => {}).finally(() => setLoading(false)) }
+  useEffect(() => { fetchData() }, [])
+
+  const handleStatusChange = async (id: string, status: string) => {
+    try { await fetch(`/api/grievances/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); setGrievances(prev => prev.map(g => g.id === id ? { ...g, status } : g)); toast({ title: 'Updated' }) }
+    catch { toast({ title: 'Error', variant: 'destructive' }) }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this grievance?')) return
+    try { await fetch(`/api/grievances/${id}`, { method: 'DELETE' }); setGrievances(prev => prev.filter(g => g.id !== id)); toast({ title: 'Deleted' }) }
+    catch { toast({ title: 'Error', variant: 'destructive' }) }
+  }
 
   if (loading) return <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto" style={{ color: BRAND_SAFFRON }} /></div>
 
@@ -2319,8 +2356,13 @@ function GrievancesView() {
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{grievances.filter((g: any) => g.status === 'resolved').length}</p><p className="text-xs text-gray-500">Resolved</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-red-600">{grievances.filter((g: any) => g.priority === 'critical').length}</p><p className="text-xs text-gray-500">Critical</p></CardContent></Card>
       </div>
-      <Card className="shadow-sm"><Table><TableHeader><TableRow><TableHead>Ticket</TableHead><TableHead>Citizen</TableHead><TableHead>Subject</TableHead><TableHead>Category</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead></TableRow></TableHeader><TableBody>
-        {grievances.map((g: any) => (<TableRow key={g.id}><TableCell className="font-mono text-xs">{g.ticketNo?.slice(0, 8)}</TableCell><TableCell><div><p className="font-medium text-sm">{g.citizenName}</p><p className="text-xs text-gray-400">{g.citizenPhone}</p></div></TableCell><TableCell className="max-w-[200px] truncate text-sm">{g.subject}</TableCell><TableCell><Badge variant="outline" className="text-xs capitalize">{g.category}</Badge></TableCell><TableCell><Badge className={g.priority === 'critical' ? 'bg-red-100 text-red-700' : g.priority === 'high' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}>{g.priority}</Badge></TableCell><TableCell><Badge className={g.status === 'resolved' ? 'bg-green-100 text-green-700' : g.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}>{g.status}</Badge></TableCell><TableCell className="text-xs text-gray-400">{new Date(g.createdAt).toLocaleDateString()}</TableCell></TableRow>))}
+      <Card className="shadow-sm"><Table><TableHeader><TableRow><TableHead>Ticket</TableHead><TableHead>Citizen</TableHead><TableHead>Subject</TableHead><TableHead>Category</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader><TableBody>
+        {grievances.map((g: any) => (<TableRow key={g.id}><TableCell className="font-mono text-xs">{g.ticketNo?.slice(0, 8)}</TableCell><TableCell><div><p className="font-medium text-sm">{g.citizenName}</p><p className="text-xs text-gray-400">{g.citizenPhone}</p></div></TableCell><TableCell className="max-w-[200px] truncate text-sm">{g.subject}</TableCell><TableCell><Badge variant="outline" className="text-xs capitalize">{g.category}</Badge></TableCell><TableCell><Badge className={g.priority === 'critical' ? 'bg-red-100 text-red-700' : g.priority === 'high' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}>{g.priority}</Badge></TableCell><TableCell>
+          <Select value={g.status} onValueChange={v => handleStatusChange(g.id, v)}>
+            <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="open">Open</SelectItem><SelectItem value="in_progress">In Progress</SelectItem><SelectItem value="resolved">Resolved</SelectItem><SelectItem value="closed">Closed</SelectItem><SelectItem value="escalated">Escalated</SelectItem></SelectContent>
+          </Select>
+        </TableCell><TableCell><Button size="icon" variant="ghost" className="size-7 text-red-500" onClick={() => handleDelete(g.id)}><Trash2 className="size-3.5" /></Button></TableCell></TableRow>))}
       </TableBody></Table></Card>
     </div>
   )
@@ -2332,10 +2374,33 @@ function EventsView() {
   const { toast } = useToast()
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [showCreate, setShowCreate] = useState(false)
+  const [newEvent, setNewEvent] = useState({ title: '', eventType: 'rally', date: '', time: '', venue: '', city: '', state: '', expectedCrowd: 0, chiefGuest: '', organizer: '' })
+  const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/events').then(r => r.ok ? r.json() : []).then(setEvents).catch(() => {}).finally(() => setLoading(false))
-  }, [])
+  const fetchEvents = () => { fetch('/api/events').then(r => r.ok ? r.json() : []).then(setEvents).catch(() => {}).finally(() => setLoading(false)) }
+  useEffect(() => { fetchEvents() }, [])
+
+  const handleCreate = async () => {
+    if (!newEvent.title || !newEvent.date) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newEvent) })
+      if (res.ok) { toast({ title: 'Event created!' }); setShowCreate(false); setNewEvent({ title: '', eventType: 'rally', date: '', time: '', venue: '', city: '', state: '', expectedCrowd: 0, chiefGuest: '', organizer: '' }); fetchEvents() }
+    } catch { toast({ title: 'Error', variant: 'destructive' }) }
+    finally { setSaving(false) }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this event?')) return
+    try { await fetch(`/api/events/${id}`, { method: 'DELETE' }); setEvents(prev => prev.filter(e => e.id !== id)); toast({ title: 'Deleted' }) }
+    catch { toast({ title: 'Error', variant: 'destructive' }) }
+  }
+
+  const handleStatusChange = async (id: string, status: string) => {
+    try { await fetch(`/api/events/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); setEvents(prev => prev.map(e => e.id === id ? { ...e, status } : e)); toast({ title: 'Updated' }) }
+    catch { toast({ title: 'Error', variant: 'destructive' }) }
+  }
 
   if (loading) return <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto" style={{ color: BRAND_SAFFRON }} /></div>
 
@@ -2343,7 +2408,7 @@ function EventsView() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h2 className="text-lg font-semibold">Events & Rally Management</h2><p className="text-sm text-gray-500">{events.length} events</p></div>
-        <Button style={{ backgroundColor: BRAND_SAFFRON, color: '#000' }}><Plus className="size-4 mr-2" />New Event</Button>
+        <Button style={{ backgroundColor: BRAND_SAFFRON, color: '#000' }} onClick={() => setShowCreate(true)}><Plus className="size-4 mr-2" />New Event</Button>
       </div>
       {events.length === 0 ? (
         <div className="text-center py-16 text-gray-400"><Clock className="size-12 mx-auto mb-3 opacity-50" /><p>No events yet</p></div>
@@ -2354,13 +2419,46 @@ function EventsView() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div><h3 className="font-semibold">{e.title}</h3><p className="text-sm text-gray-500">{e.venue}, {e.city}</p><p className="text-xs text-gray-400 mt-1">{e.date} • {e.eventType}</p></div>
-                  <Badge className={e.status === 'upcoming' ? 'bg-blue-100 text-blue-700' : e.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>{e.status}</Badge>
+                  <div className="flex items-center gap-1">
+                    <Select value={e.status} onValueChange={v => handleStatusChange(e.id, v)}>
+                      <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="upcoming">Upcoming</SelectItem>
+                        <SelectItem value="ongoing">Ongoing</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="icon" variant="ghost" className="size-7 text-red-500" onClick={() => handleDelete(e.id)}><Trash2 className="size-3.5" /></Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+      {/* Create Event Dialog */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Create Event</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-xs">Title *</Label><Input value={newEvent.title} onChange={e => setNewEvent(p => ({...p, title: e.target.value}))} /></div>
+              <div><Label className="text-xs">Type</Label><Select value={newEvent.eventType} onValueChange={v => setNewEvent(p => ({...p, eventType: v}))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="rally">Rally</SelectItem><SelectItem value="meeting">Meeting</SelectItem><SelectItem value="padyatra">Padyatra</SelectItem><SelectItem value="convention">Convention</SelectItem><SelectItem value="virtual">Virtual</SelectItem><SelectItem value="training">Training</SelectItem></SelectContent></Select></div>
+              <div><Label className="text-xs">Date *</Label><Input type="date" value={newEvent.date} onChange={e => setNewEvent(p => ({...p, date: e.target.value}))} /></div>
+              <div><Label className="text-xs">Time</Label><Input type="time" value={newEvent.time} onChange={e => setNewEvent(p => ({...p, time: e.target.value}))} /></div>
+              <div><Label className="text-xs">Venue</Label><Input value={newEvent.venue} onChange={e => setNewEvent(p => ({...p, venue: e.target.value}))} /></div>
+              <div><Label className="text-xs">City</Label><Input value={newEvent.city} onChange={e => setNewEvent(p => ({...p, city: e.target.value}))} /></div>
+              <div><Label className="text-xs">State</Label><Input value={newEvent.state} onChange={e => setNewEvent(p => ({...p, state: e.target.value}))} /></div>
+              <div><Label className="text-xs">Chief Guest</Label><Input value={newEvent.chiefGuest} onChange={e => setNewEvent(p => ({...p, chiefGuest: e.target.value}))} /></div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button onClick={handleCreate} disabled={saving || !newEvent.title || !newEvent.date} style={{ backgroundColor: BRAND_SAFFRON, color: '#000' }}>{saving ? <Loader2 className="size-4 animate-spin mr-1" /> : <Plus className="size-4 mr-1" />}Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
