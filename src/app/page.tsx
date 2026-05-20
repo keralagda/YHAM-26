@@ -400,22 +400,23 @@ export default function Home() {
             🌏 {lang === 'hi' ? 'दक्षिण भारत में पार्टी विस्तार हेतु समर्पित' : lang === 'ml' ? 'ദക്ഷിണേന്ത്യയിൽ പാർട്ടി വിപുലീകരണത്തിന് സമർപ്പിതം' : 'Dedicated to Party Expansion in South India'}
           </Badge>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
           {yhamMembers.map((member, idx) => {
             const name = lang === 'hi' ? member.nameHi : lang === 'ml' ? member.nameMl : member.nameEn
             const role = lang === 'hi' ? member.roleHi : lang === 'ml' ? member.roleMl : member.roleEn
             const colors: ('saffron' | 'green' | 'navy')[] = ['saffron', 'green', 'navy', 'saffron']
             return (
-              <LeaderCardExtended
-                key={member.id}
-                name={name}
-                role={role}
-                phone={member.phone || ''}
-                color={colors[idx % colors.length]}
-                delay={idx * 0.1}
-                image={member.imageUrl}
-                onImageClick={(src, n) => setLightbox({ src, name: n })}
-              />
+              <div key={member.id} className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
+                <LeaderCardExtended
+                  name={name}
+                  role={role}
+                  phone={member.phone || ''}
+                  color={colors[idx % colors.length]}
+                  delay={idx * 0.1}
+                  image={member.imageUrl}
+                  onImageClick={(src, n) => setLightbox({ src, name: n })}
+                />
+              </div>
             )
           })}
         </div>
