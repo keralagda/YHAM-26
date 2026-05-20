@@ -143,3 +143,167 @@ model BlockTemplate {
   settings    String   @default("{}") // default settings JSON
   createdAt   DateTime @default(now())
 }
+
+// ─── Party Membership & Cadre Management ─────────────────────────────────────
+
+model PartyMember {
+  id              String   @id @default(cuid())
+  // Personal
+  fullName        String
+  fatherName      String   @default("")
+  dob             String   @default("")
+  gender          String   @default("")
+  phone           String
+  altPhone        String   @default("")
+  email           String   @default("")
+  aadharLast4     String   @default("")
+  bloodGroup      String   @default("")
+  photoUrl        String   @default("")
+  // Address
+  state           String   @default("")
+  district        String   @default("")
+  block           String   @default("")
+  panchayat       String   @default("")
+  ward            String   @default("")
+  booth           String   @default("")
+  pincode         String   @default("")
+  fullAddress     String   @default("")
+  // Political
+  designation     String   @default("karyakarta") // national, state, district, block, panchayat, ward, booth, panna_pramukh, karyakarta
+  referredBy      String   @default("")
+  previousParty   String   @default("")
+  voterIdNumber   String   @default("")
+  assemblyConst   String   @default("")
+  parlConst       String   @default("")
+  // Professional
+  occupation      String   @default("")
+  education       String   @default("")
+  skills          String   @default("")
+  // Status
+  status          String   @default("pending") // pending, verified, active, suspended
+  verifiedAt      DateTime?
+  verifiedBy      String   @default("")
+  digitalIdUrl    String   @default("")
+  // Metrics
+  housesVisited   Int      @default(0)
+  membersRecruited Int     @default(0)
+  eventsAttended  Int      @default(0)
+  socialShares    Int      @default(0)
+  kpiScore        Int      @default(0)
+  //
+  notes           String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ─── Blood Bank ──────────────────────────────────────────────────────────────
+
+model BloodDonor {
+  id            String   @id @default(cuid())
+  fullName      String
+  phone         String
+  altPhone      String   @default("")
+  email         String   @default("")
+  bloodGroup    String   // A+, A-, B+, B-, AB+, AB-, O+, O-
+  dob           String   @default("")
+  gender        String   @default("")
+  weight        String   @default("")
+  state         String   @default("")
+  district      String   @default("")
+  city          String   @default("")
+  pincode       String   @default("")
+  address       String   @default("")
+  lastDonation  String   @default("")
+  totalDonations Int     @default(0)
+  available     Boolean  @default(true)
+  medicalNotes  String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model BloodRequest {
+  id            String   @id @default(cuid())
+  patientName   String
+  bloodGroup    String
+  units         Int      @default(1)
+  hospital      String   @default("")
+  city          String   @default("")
+  district      String   @default("")
+  state         String   @default("")
+  contactName   String
+  contactPhone  String
+  urgency       String   @default("normal") // normal, urgent, critical
+  status        String   @default("open") // open, fulfilled, cancelled
+  notes         String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ─── Grievance Redressal (Jan Sunwai) ────────────────────────────────────────
+
+model Grievance {
+  id            String   @id @default(cuid())
+  ticketNo      String   @unique @default(cuid())
+  citizenName   String
+  citizenPhone  String
+  citizenEmail  String   @default("")
+  category      String   @default("general") // roads, water, electricity, sanitation, education, health, corruption, other
+  subject       String
+  description   String
+  location      String   @default("")
+  state         String   @default("")
+  district      String   @default("")
+  ward          String   @default("")
+  imageUrls     String   @default("[]") // JSON array of image URLs
+  assignedTo    String   @default("")
+  status        String   @default("open") // open, in_progress, resolved, closed, escalated
+  priority      String   @default("medium") // low, medium, high, critical
+  resolution    String   @default("")
+  resolvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ─── Events & Rally Management ───────────────────────────────────────────────
+
+model PartyEvent {
+  id            String   @id @default(cuid())
+  title         String
+  description   String   @default("")
+  eventType     String   @default("rally") // rally, meeting, padyatra, convention, virtual, training
+  date          String
+  time          String   @default("")
+  venue         String   @default("")
+  city          String   @default("")
+  district      String   @default("")
+  state         String   @default("")
+  expectedCrowd Int      @default(0)
+  actualCrowd   Int      @default(0)
+  chiefGuest    String   @default("")
+  organizer     String   @default("")
+  status        String   @default("upcoming") // upcoming, ongoing, completed, cancelled
+  imageUrl      String   @default("")
+  streamUrl     String   @default("")
+  notes         String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ─── Donations & Treasury ────────────────────────────────────────────────────
+
+model Donation {
+  id            String   @id @default(cuid())
+  donorName     String
+  donorPhone    String   @default("")
+  donorEmail    String   @default("")
+  amount        Float
+  method        String   @default("upi") // upi, bank_transfer, cash, cheque
+  transactionId String   @default("")
+  state         String   @default("")
+  district      String   @default("")
+  purpose       String   @default("general") // general, campaign, event, relief
+  status        String   @default("confirmed") // pending, confirmed, failed
+  receiptUrl    String   @default("")
+  notes         String   @default("")
+  createdAt     DateTime @default(now())
+}
