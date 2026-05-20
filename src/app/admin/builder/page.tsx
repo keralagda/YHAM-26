@@ -269,7 +269,10 @@ export default function PageBuilderAdmin() {
                 <div className="text-center py-8 text-gray-400 text-sm">
                   <FileText className="size-8 mx-auto mb-2 opacity-50" />
                   <p>No pages yet</p>
-                  <p className="text-xs mt-1">Create your first page</p>
+                  <p className="text-xs mt-1">Seed default pages or create new</p>
+                  <Button size="sm" className="mt-3 bg-red-600 hover:bg-red-700 text-white text-xs" onClick={async () => { await fetch('/api/pages/seed', { method: 'POST' }); fetchPages() }}>
+                    Seed Default Pages
+                  </Button>
                 </div>
               ) : pages.map(page => (
                 <button
@@ -378,8 +381,8 @@ export default function PageBuilderAdmin() {
           )}
         </main>
 
-        {/* Right Panel - Block Editor */}
-        {selectedBlock && (
+        {/* Right Panel - Block Editor or Page Settings */}
+        {selectedBlock ? (
           <aside className="w-80 bg-white border-l border-gray-200 flex flex-col shrink-0">
             <div className="p-4 border-b border-gray-100">
               <h3 className="font-semibold text-sm text-gray-800">Edit Block</h3>
@@ -389,7 +392,75 @@ export default function PageBuilderAdmin() {
               <BlockEditor block={selectedBlock} onSave={(content, settings) => handleUpdateBlock(selectedBlock.id, { content, settings })} saving={saving} />
             </ScrollArea>
           </aside>
-        )}
+        ) : selectedPage ? (
+          <aside className="w-80 bg-white border-l border-gray-200 flex flex-col shrink-0">
+            <div className="p-4 border-b border-gray-100">
+              <h3 className="font-semibold text-sm text-gray-800">Page Settings</h3>
+              <p className="text-xs text-gray-400 mt-0.5">/{selectedPage.slug}</p>
+            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-500">Title (English)</Label>
+                  <Input defaultValue={selectedPage.titleEn} onBlur={e => handleUpdatePage({ titleEn: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-500">Title (Hindi)</Label>
+                  <Input defaultValue={selectedPage.titleHi} onBlur={e => handleUpdatePage({ titleHi: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-500">Title (Malayalam)</Label>
+                  <Input defaultValue={selectedPage.titleMl} onBlur={e => handleUpdatePage({ titleMl: e.target.value })} />
+                </div>
+                <Separator />
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-500">URL Slug</Label>
+                  <Input defaultValue={selectedPage.slug} onBlur={e => handleUpdatePage({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-500">Template</Label>
+                  <Select defaultValue={selectedPage.template} onValueChange={v => handleUpdatePage({ template: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TEMPLATES.map(t => <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-500">Theme</Label>
+                  <Select defaultValue={selectedPage.theme} onValueChange={v => handleUpdatePage({ theme: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {THEMES.map(t => (
+                        <SelectItem key={t.id} value={t.id}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: t.colors[0] }} />
+                            {t.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-gray-500">Published</Label>
+                  <Switch checked={selectedPage.published} onCheckedChange={v => handleUpdatePage({ published: v })} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs text-gray-500">Home Page</Label>
+                  <Switch checked={selectedPage.isHomePage} onCheckedChange={v => handleUpdatePage({ isHomePage: v })} />
+                </div>
+                <Separator />
+                <a href={`/p/${selectedPage.slug}`} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm" className="w-full gap-2">
+                    <ExternalLink className="size-3.5" /> Preview Page
+                  </Button>
+                </a>
+              </div>
+            </ScrollArea>
+          </aside>
+        ) : null}
       </div>
 
       {/* New Page Dialog */}

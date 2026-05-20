@@ -218,7 +218,7 @@ interface AuthUser {
 type SectionType = 'hero' | 'content' | 'leadership' | 'cta'
 type LanguageKey = 'hi' | 'en' | 'ml'
 type ContentMap = Record<string, string>
-type AdminPage = 'dashboard' | 'site-builder' | 'media' | 'members' | 'settings' | 'messages'
+type AdminPage = 'dashboard' | 'page-builder' | 'media' | 'members' | 'settings' | 'messages'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -244,7 +244,7 @@ const MEMBER_CATEGORIES = ['yham', 'ham', 'endorsement'] as const
 
 const NAV_ITEMS: { key: AdminPage; label: string; icon: React.ReactNode }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="size-4" /> },
-  { key: 'site-builder', label: 'Site Builder', icon: <Building2 className="size-4" /> },
+  { key: 'page-builder', label: 'Page Builder', icon: <Layout className="size-4" /> },
   { key: 'media', label: 'Media', icon: <ImageIcon className="size-4" /> },
   { key: 'members', label: 'Members', icon: <Users className="size-4" /> },
   { key: 'settings', label: 'Settings', icon: <Settings className="size-4" /> },
@@ -2223,7 +2223,7 @@ export default function AdminPage() {
 
   const PAGE_TITLES: Record<AdminPage, string> = {
     dashboard: 'Dashboard',
-    'site-builder': 'Site Builder',
+    'page-builder': 'Page Builder',
     media: 'Media Library',
     members: 'Members & Leaders',
     settings: 'Site Settings',
@@ -2233,7 +2233,9 @@ export default function AdminPage() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard': return <DashboardView />
-      case 'site-builder': return <SiteBuilderView />
+      case 'page-builder': 
+        if (typeof window !== 'undefined') window.location.href = '/admin/builder'
+        return <div className="flex items-center justify-center h-64"><Loader2 className="size-8 animate-spin" style={{ color: BRAND_SAFFRON }} /><span className="ml-3 text-gray-500">Opening Page Builder...</span></div>
       case 'media': return <MediaView />
       case 'members': return <MembersView />
       case 'settings': return <SettingsView />
@@ -2296,15 +2298,6 @@ export default function AdminPage() {
           })}
         </div>
       </ScrollArea>
-
-      {/* Page Builder Link */}
-      <div className="px-3 py-2 border-t border-white/10">
-        <a href="/admin/builder" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white/90 transition-all">
-          <Layout className="size-4 shrink-0" />
-          <span className="flex-1 text-left">Page Builder</span>
-          <ExternalLink className="size-3 opacity-50" />
-        </a>
-      </div>
 
       {/* User info & Logout */}
       <div className="p-3 border-t border-white/10">
