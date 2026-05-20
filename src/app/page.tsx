@@ -49,6 +49,7 @@ export default function Home() {
   const [lightbox, setLightbox] = useState<{ src: string; name: string } | null>(null)
   const [yhamMembers, setYhamMembers] = useState<any[]>([])
   const [hamMembers, setHamMembers] = useState<any[]>([])
+  const [heroImage, setHeroImage] = useState<string>('')
 
   // Fetch site sections from API on mount
   useEffect(() => {
@@ -59,6 +60,25 @@ export default function Home() {
         const vis: Record<string, boolean> = {}
         sections.forEach(s => { vis[s.sectionKey] = s.visible })
         setSectionVisibility(vis)
+      })
+      .catch(() => {})
+  }, [])
+
+  // Fetch home page blocks from Page Builder for hero image
+  useEffect(() => {
+    fetch('/api/pages')
+      .then(res => res.ok ? res.json() : [])
+      .then((pages: any[]) => {
+        const homePage = pages.find((p: any) => p.isHomePage || p.slug === 'home')
+        if (homePage?.blocks) {
+          const heroBlock = homePage.blocks.find((b: any) => b.type === 'hero')
+          if (heroBlock) {
+            try {
+              const content = JSON.parse(heroBlock.content)
+              if (content.bgImage) setHeroImage(content.bgImage)
+            } catch { /* ignore */ }
+          }
+        }
       })
       .catch(() => {})
   }, [])
@@ -323,7 +343,7 @@ export default function Home() {
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
-                  src={t('heroBannerImage') || "/hero-banner.png"}
+                  src={heroImage || t('heroBannerImage') || "/hero-banner.png"}
                   alt="Youth Rally"
                   className="w-full h-auto object-cover"
                 />
