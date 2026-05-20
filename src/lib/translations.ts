@@ -12,6 +12,8 @@ export const translations: Record<Language, Record<string, string>> = {
     navNational: "राष्ट्रीय",
     navLeadership: "नेतृत्व",
     navContact: "संपर्क",
+    navJoin: "सदस्य बनें",
+    navBloodBank: "ब्लड बैंक",
     langToggle: "भाषा",
 
     // Hero Section
@@ -152,6 +154,8 @@ export const translations: Record<Language, Record<string, string>> = {
     navNational: "National",
     navLeadership: "Leadership",
     navContact: "Contact",
+    navJoin: "Join Party",
+    navBloodBank: "Blood Bank",
     langToggle: "Language",
 
     // Hero Section
@@ -292,6 +296,8 @@ export const translations: Record<Language, Record<string, string>> = {
     navNational: "ദേശീയ",
     navLeadership: "നേതൃത്വം",
     navContact: "ബന്ധപ്പെടുക",
+    navJoin: "അംഗമാകൂ",
+    navBloodBank: "ബ്ലഡ് ബാങ്ക്",
     langToggle: "ഭാഷ",
 
     // Hero Section

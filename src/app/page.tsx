@@ -159,13 +159,12 @@ export default function Home() {
     setMobileMenuOpen(false)
   }
 
-  const navItems = [
+  const navItems: { key: string; id: string; href?: string }[] = [
     { key: 'navVision', id: 'vision' },
-    { key: 'navStructure', id: 'grassroots' },
-    { key: 'navOpportunities', id: 'opportunities' },
-    { key: 'navNational', id: 'national' },
     { key: 'navLeadership', id: 'leadership' },
     { key: 'navContact', id: 'cta' },
+    { key: 'navJoin', id: '', href: '/join' },
+    { key: 'navBloodBank', id: '', href: '/blood-bank' },
   ]
 
   return (
@@ -196,13 +195,19 @@ export default function Home() {
             {/* Desktop Nav */}
             <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => (
-                <button
-                  key={item.key}
-                  onClick={() => scrollTo(item.id)}
-                  className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[#FF9933] rounded-lg hover:bg-[#FF9933]/10 transition-all"
-                >
-                  {t(item.key)}
-                </button>
+                item.href ? (
+                  <Link key={item.key} href={item.href} className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[#FF9933] rounded-lg hover:bg-[#FF9933]/10 transition-all">
+                    {t(item.key)}
+                  </Link>
+                ) : (
+                  <button
+                    key={item.key}
+                    onClick={() => scrollTo(item.id)}
+                    className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[#FF9933] rounded-lg hover:bg-[#FF9933]/10 transition-all"
+                  >
+                    {t(item.key)}
+                  </button>
+                )
               ))}
             </nav>
 
@@ -264,13 +269,19 @@ export default function Home() {
             >
               <div className="px-4 py-3 space-y-1">
                 {navItems.map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => scrollTo(item.id)}
-                    className="block w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-[#FF9933]/10 hover:text-[#FF9933] transition-colors font-medium"
-                  >
-                    {t(item.key)}
-                  </button>
+                  item.href ? (
+                    <Link key={item.key} href={item.href} className="block w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-[#FF9933]/10 hover:text-[#FF9933] transition-colors font-medium">
+                      {t(item.key)}
+                    </Link>
+                  ) : (
+                    <button
+                      key={item.key}
+                      onClick={() => scrollTo(item.id)}
+                      className="block w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-[#FF9933]/10 hover:text-[#FF9933] transition-colors font-medium"
+                    >
+                      {t(item.key)}
+                    </button>
+                  )
                 ))}
               </div>
             </motion.div>
@@ -827,13 +838,19 @@ export default function Home() {
               <h3 className="font-bold text-lg mb-4">{t('footerQuickLinks')}</h3>
               <div className="grid grid-cols-2 gap-2">
                 {navItems.map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => scrollTo(item.id)}
-                    className="text-left text-white/60 hover:text-[#FF9933] transition-colors text-sm py-1"
-                  >
-                    {t(item.key)}
-                  </button>
+                  item.href ? (
+                    <Link key={item.key} href={item.href} className="text-left text-white/60 hover:text-[#FF9933] transition-colors text-sm py-1">
+                      {t(item.key)}
+                    </Link>
+                  ) : (
+                    <button
+                      key={item.key}
+                      onClick={() => scrollTo(item.id)}
+                      className="text-left text-white/60 hover:text-[#FF9933] transition-colors text-sm py-1"
+                    >
+                      {t(item.key)}
+                    </button>
+                  )
                 ))}
                 <Link href="/admin" className="text-left text-white/40 hover:text-[#FF9933] transition-colors text-xs py-1 mt-2 block">
                   Admin Panel
