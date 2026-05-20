@@ -324,36 +324,14 @@ export default function Home() {
       {isSectionVisible('ham-leadership') && <SectionWrapper id="ham-leadership" className="bg-[#000080]">
         <SectionHeader title={t('hamLeadershipTitle')} icon={<Landmark className="w-6 h-6" />} light />
         <div className="max-w-5xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-8 items-start">
-            {/* Endorsement - Faggan Singh Kulaste */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0 }}
-              className="flex flex-col items-center"
-            >
-              <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full overflow-hidden border-4 border-[#FF9933]/50 shadow-xl mb-4">
-                <img
-                  src="/faggan-singh-kulaste.jpg"
-                  alt="Shri Faggan Singh Kulaste"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#000080]/30 to-transparent" />
-              </div>
-              <h3 className="text-lg font-bold text-white text-center">{t('hamEndorsementName')}</h3>
-              <Badge className="mt-2 bg-[#FF9933]/20 text-[#FF9933] border-[#FF9933]/30">
-                {t('hamEndorsementRole')}
-              </Badge>
-            </motion.div>
-
+          <div className="max-w-3xl mx-auto">
             {/* HAM Leaders Image */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="lg:col-span-2"
+              className="w-full"
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl mb-6">
                 <img

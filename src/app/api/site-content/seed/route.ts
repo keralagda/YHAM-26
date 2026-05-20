@@ -22,7 +22,7 @@ const SECTION_DEFINITIONS = [
     label: 'HAM Leadership',
     order: 2,
     sectionType: 'leadership',
-    translationKeys: ['hamLeadershipTitle', 'hamPatron', 'hamPresident', 'hamPatronName', 'hamPresidentName', 'hamEndorsementName', 'hamEndorsementRole'],
+    translationKeys: ['hamLeadershipTitle', 'hamPatron', 'hamPresident', 'hamPatronName', 'hamPresidentName'],
   },
   {
     sectionKey: 'yham-leadership',

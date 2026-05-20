@@ -34,8 +34,6 @@ export const translations: Record<Language, Record<string, string>> = {
     hamPresident: "राष्ट्रीय अध्यक्ष",
     hamPatronName: "जीतन राम मांझी",
     hamPresidentName: "संतोष कुमार सुमन",
-    hamEndorsementName: "श्री फग्गन सिंह कुलस्ते",
-    hamEndorsementRole: "राज्यपाल 2024",
 
     // YHAM Leadership
     yhamLeadershipTitle: "युवा हिंदुस्तानी अवाम मोर्चा नेतृत्व",
@@ -170,8 +168,6 @@ export const translations: Record<Language, Record<string, string>> = {
     hamPresident: "National President",
     hamPatronName: "Jitan Ram Manjhi",
     hamPresidentName: "Santosh Kumar Suman",
-    hamEndorsementName: "Shri Faggan Singh Kulaste",
-    hamEndorsementRole: "Governor 2024",
 
     // YHAM Leadership
     yhamLeadershipTitle: "Yuva Hindustani Awam Morcha Leadership",
@@ -306,8 +302,6 @@ export const translations: Record<Language, Record<string, string>> = {
     hamPresident: "ദേശീയ അധ്യക്ഷൻ",
     hamPatronName: "ജിതൻ റാം മാഞ്ചി",
     hamPresidentName: "സന്തോഷ് കുമാർ സുമൻ",
-    hamEndorsementName: "ശ്രീ ഫഗ്ഗൻ സിംഗ് കുലസ്തെ",
-    hamEndorsementRole: "ഗവർണർ 2024",
 
     // YHAM Leadership
     yhamLeadershipTitle: "യുവ ഹിന്ദുസ്ഥാനി അവാം മോർച്ച നേതൃത്വം",
