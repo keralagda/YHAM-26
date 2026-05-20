@@ -61,6 +61,7 @@ import {
   ArrowUpRight,
   FolderOpen,
   Layout,
+  Copy,
 } from 'lucide-react'
 import {
   LineChart,
@@ -251,17 +252,46 @@ const NAV_ITEMS: { key: AdminPage; label: string; icon: React.ReactNode }[] = [
 ]
 
 const SETTINGS_LABELS: Record<string, string> = {
+  // General
   site_name: 'Site Name',
   site_description: 'Site Description',
   site_keywords: 'SEO Keywords',
+  site_logo_url: 'Logo URL',
+  site_favicon_url: 'Favicon URL',
+  // Contact
+  contact_email: 'Contact Email',
+  contact_phone: 'Contact Phone',
+  contact_whatsapp: 'WhatsApp Number',
+  contact_address: 'Contact Address',
+  // Social Media
   social_facebook: 'Facebook URL',
   social_twitter: 'Twitter/X URL',
   social_instagram: 'Instagram URL',
   social_youtube: 'YouTube URL',
-  contact_email: 'Contact Email',
-  contact_phone: 'Contact Phone',
-  contact_address: 'Contact Address',
+  social_linkedin: 'LinkedIn URL',
+  social_whatsapp_channel: 'WhatsApp Channel',
+  // SEO & Analytics
   google_analytics_id: 'Google Analytics ID',
+  google_tag_manager: 'Google Tag Manager ID',
+  meta_og_image: 'Default OG Image URL',
+  // Theme & Appearance
+  theme_primary_color: 'Primary Color (hex)',
+  theme_secondary_color: 'Secondary Color (hex)',
+  theme_mode: 'Theme Mode (light/dark)',
+  // Party Info
+  party_full_name_hi: 'Party Full Name (Hindi)',
+  party_full_name_en: 'Party Full Name (English)',
+  party_short_name: 'Party Short Name',
+  party_founded_year: 'Founded Year',
+  party_registration_no: 'Registration Number',
+  // Membership
+  membership_form_url: 'Membership Form URL',
+  membership_fee: 'Membership Fee',
+  // Advanced
+  maintenance_mode: 'Maintenance Mode (true/false)',
+  custom_head_scripts: 'Custom Head Scripts',
+  custom_footer_scripts: 'Custom Footer Scripts',
+  robots_txt: 'Robots.txt Content',
 }
 
 const CHART_COLORS = [BRAND_SAFFRON, BRAND_GREEN, BRAND_NAVY, '#e11d48', '#7c3aed', '#0891b2']
@@ -1273,6 +1303,32 @@ function MediaView() {
     }
   }
 
+  const handleCopyUrl = (url: string) => {
+    navigator.clipboard.writeText(url)
+    toast({ title: 'Copied!', description: 'URL copied to clipboard' })
+  }
+
+  const handleReplace = async (id: string, file: File) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('alt', file.name)
+      formData.append('category', categoryFilter !== 'all' ? categoryFilter : 'general')
+      formData.append('folder', categoryFilter !== 'all' ? categoryFilter : 'general')
+      const res = await fetch('/api/media/upload', { method: 'POST', body: formData })
+      if (!res.ok) throw new Error()
+      // Delete old one
+      await fetch('/api/media', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+      toast({ title: 'Replaced!', description: 'Media file replaced successfully' })
+      fetchMedia()
+    } catch {
+      toast({ title: 'Error', description: 'Failed to replace media', variant: 'destructive' })
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const filteredMedia = categoryFilter === 'all' ? media : media.filter((m) => m.category === categoryFilter)
 
   return (
@@ -1327,13 +1383,21 @@ function MediaView() {
               <Card className="overflow-hidden hover:shadow-md transition-shadow">
                 <div className="aspect-square bg-gray-100 relative">
                   <img src={item.url} alt={item.alt} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <div className="flex gap-2">
-                      <Button size="icon" variant="secondary" className="size-8" onClick={() => setEditAlt({ id: item.id, alt: item.alt })}>
-                        <FileText className="size-3.5" />
-                      </Button>
-                      <Button size="icon" variant="destructive" className="size-8" onClick={() => setDeleteId(item.id)}>
-                        <Trash2 className="size-3.5" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex gap-1.5">
+                        <Button size="icon" variant="secondary" className="size-7" title="Copy URL" onClick={() => handleCopyUrl(item.url)}>
+                          <Copy className="size-3" />
+                        </Button>
+                        <Button size="icon" variant="secondary" className="size-7" title="Edit" onClick={() => setEditAlt({ id: item.id, alt: item.alt })}>
+                          <FileText className="size-3" />
+                        </Button>
+                        <Button size="icon" variant="secondary" className="size-7" title="Replace" onClick={() => { const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*,video/*'; input.onchange = (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) handleReplace(item.id, f) }; input.click() }}>
+                          <RefreshCw className="size-3" />
+                        </Button>
+                      </div>
+                      <Button size="sm" variant="destructive" className="h-7 text-xs w-full" onClick={() => setDeleteId(item.id)}>
+                        <Trash2 className="size-3 mr-1" /> Delete
                       </Button>
                     </div>
                   </div>
@@ -1341,7 +1405,7 @@ function MediaView() {
                 </div>
                 <CardContent className="p-2">
                   <p className="text-xs text-gray-600 truncate">{item.alt || 'No alt text'}</p>
-                  <p className="text-[10px] text-gray-400">{formatDate(item.createdAt)}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{item.url}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -1779,16 +1843,28 @@ function SettingsView() {
   const knownSettings = settings.filter((s) => SETTINGS_LABELS[s.key])
   const customSettings = settings.filter((s) => !SETTINGS_LABELS[s.key])
 
-  const getSettingIcon = (key: string) => {
-    if (key.startsWith('social_')) return <Globe className="size-4 text-blue-500" />
-    if (key.startsWith('contact_')) {
-      if (key.includes('email')) return <MailIcon className="size-4 text-green-500" />
-      if (key.includes('phone')) return <Phone className="size-4 text-purple-500" />
-      if (key.includes('address')) return <MapPin className="size-4 text-red-500" />
+  // Group known settings by category
+  const settingGroups = [
+    { title: 'General', icon: <Globe className="size-4" style={{ color: BRAND_SAFFRON }} />, keys: ['site_name', 'site_description', 'site_keywords', 'site_logo_url', 'site_favicon_url'] },
+    { title: 'Contact Information', icon: <Phone className="size-4 text-green-600" />, keys: ['contact_email', 'contact_phone', 'contact_whatsapp', 'contact_address'] },
+    { title: 'Social Media', icon: <Globe className="size-4 text-blue-500" />, keys: ['social_facebook', 'social_twitter', 'social_instagram', 'social_youtube', 'social_linkedin', 'social_whatsapp_channel'] },
+    { title: 'SEO & Analytics', icon: <BarChart3 className="size-4 text-indigo-500" />, keys: ['google_analytics_id', 'google_tag_manager', 'meta_og_image'] },
+    { title: 'Theme & Appearance', icon: <Star className="size-4 text-purple-500" />, keys: ['theme_primary_color', 'theme_secondary_color', 'theme_mode'] },
+    { title: 'Party Information', icon: <Building2 className="size-4 text-red-600" />, keys: ['party_full_name_hi', 'party_full_name_en', 'party_short_name', 'party_founded_year', 'party_registration_no'] },
+    { title: 'Membership', icon: <Users className="size-4" style={{ color: BRAND_SAFFRON }} />, keys: ['membership_form_url', 'membership_fee'] },
+    { title: 'Advanced', icon: <Settings className="size-4 text-gray-600" />, keys: ['maintenance_mode', 'custom_head_scripts', 'custom_footer_scripts', 'robots_txt'] },
+  ]
+
+  const getSettingValue = (key: string) => settings.find(s => s.key === key)?.value || ''
+  const getSettingId = (key: string) => settings.find(s => s.key === key)?.id || ''
+
+  const ensureSetting = (key: string, value: string) => {
+    const existing = settings.find(s => s.key === key)
+    if (existing) {
+      updateSettingValue(existing.id, value)
+    } else {
+      setSettings(prev => [...prev, { id: `new-${Date.now()}-${key}`, key, value }])
     }
-    if (key.startsWith('site_')) return <Globe className="size-4" style={{ color: BRAND_SAFFRON }} />
-    if (key.includes('analytics')) return <BarChart3 className="size-4 text-indigo-500" />
-    return <Settings className="size-4 text-gray-500" />
   }
 
   if (loading) {
@@ -1796,11 +1872,11 @@ function SettingsView() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-800">Site Settings</h2>
-          <p className="text-sm text-gray-500">{settings.length} configuration keys</p>
+          <p className="text-sm text-gray-500">Configure your website settings across all categories</p>
         </div>
         <Button onClick={handleSaveAll} disabled={saving} style={{ backgroundColor: BRAND_SAFFRON, color: '#000' }}>
           {saving ? <Loader2 className="size-4 animate-spin mr-2" /> : <Save className="size-4 mr-2" />}
@@ -1808,40 +1884,42 @@ function SettingsView() {
         </Button>
       </div>
 
-      {/* Known Settings */}
-      {knownSettings.length > 0 && (
-        <Card className="shadow-sm">
+      {/* Grouped Settings */}
+      {settingGroups.map((group) => (
+        <Card key={group.title} className="shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">General Settings</CardTitle>
-            <CardDescription>Common site configuration</CardDescription>
+            <CardTitle className="text-base flex items-center gap-2">
+              {group.icon}
+              {group.title}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {knownSettings.map((setting) => (
-              <div key={setting.id} className="flex items-start gap-3">
-                <div className="mt-2 shrink-0">{getSettingIcon(setting.key)}</div>
-                <div className="flex-1 space-y-1">
-                  <Label className="text-sm font-medium">{SETTINGS_LABELS[setting.key] || setting.key}</Label>
-                  <p className="text-[10px] text-gray-400 font-mono">{setting.key}</p>
-                  {setting.key.includes('description') || setting.key.includes('address') || setting.key.includes('keywords') ? (
-                    <Textarea
-                      value={setting.value}
-                      onChange={(e) => updateSettingValue(setting.id, e.target.value)}
-                      rows={2}
-                      className="resize-y"
-                    />
-                  ) : (
-                    <Input
-                      value={setting.value}
-                      onChange={(e) => updateSettingValue(setting.id, e.target.value)}
-                      placeholder={SETTINGS_LABELS[setting.key] || setting.key}
-                    />
-                  )}
+            {group.keys.map((key) => {
+              const label = SETTINGS_LABELS[key] || key
+              const value = getSettingValue(key)
+              const isTextarea = key.includes('description') || key.includes('address') || key.includes('keywords') || key.includes('scripts') || key.includes('robots')
+              const isColor = key.includes('color')
+              return (
+                <div key={key} className="space-y-1.5">
+                  <Label className="text-sm font-medium">{label}</Label>
+                  <div className="flex gap-2">
+                    {isColor ? (
+                      <>
+                        <input type="color" value={value || '#FF9933'} onChange={(e) => ensureSetting(key, e.target.value)} className="w-10 h-9 rounded border cursor-pointer" />
+                        <Input value={value} onChange={(e) => ensureSetting(key, e.target.value)} placeholder="#FF9933" className="flex-1" />
+                      </>
+                    ) : isTextarea ? (
+                      <Textarea value={value} onChange={(e) => ensureSetting(key, e.target.value)} rows={3} className="resize-y" placeholder={label} />
+                    ) : (
+                      <Input value={value} onChange={(e) => ensureSetting(key, e.target.value)} placeholder={label} />
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </CardContent>
         </Card>
-      )}
+      ))}
 
       {/* Custom Settings */}
       {customSettings.length > 0 && (
