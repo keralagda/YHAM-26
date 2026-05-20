@@ -218,7 +218,7 @@ interface AuthUser {
 type SectionType = 'hero' | 'content' | 'leadership' | 'cta'
 type LanguageKey = 'hi' | 'en' | 'ml'
 type ContentMap = Record<string, string>
-type AdminPage = 'dashboard' | 'page-builder' | 'media' | 'members' | 'settings' | 'messages'
+type AdminPage = 'dashboard' | 'page-builder' | 'media' | 'members' | 'cadre' | 'blood-bank' | 'grievances' | 'events' | 'donations' | 'settings' | 'messages'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -245,8 +245,13 @@ const MEMBER_CATEGORIES = ['yham', 'ham', 'endorsement'] as const
 const NAV_ITEMS: { key: AdminPage; label: string; icon: React.ReactNode }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="size-4" /> },
   { key: 'page-builder', label: 'Page Builder', icon: <Layout className="size-4" /> },
+  { key: 'cadre', label: 'Cadre / Members', icon: <Users className="size-4" /> },
+  { key: 'blood-bank', label: 'Blood Bank', icon: <Activity className="size-4" /> },
+  { key: 'grievances', label: 'Grievances', icon: <MessageSquare className="size-4" /> },
+  { key: 'events', label: 'Events', icon: <Clock className="size-4" /> },
+  { key: 'donations', label: 'Donations', icon: <TrendingUp className="size-4" /> },
   { key: 'media', label: 'Media', icon: <ImageIcon className="size-4" /> },
-  { key: 'members', label: 'Members', icon: <Users className="size-4" /> },
+  { key: 'members', label: 'Leaders', icon: <Star className="size-4" /> },
   { key: 'settings', label: 'Settings', icon: <Settings className="size-4" /> },
   { key: 'messages', label: 'Messages', icon: <Mail className="size-4" /> },
 ]
@@ -2139,6 +2144,262 @@ function MessagesView() {
   )
 }
 
+// ─── Cadre Management View ───────────────────────────────────────────────────
+
+function CadreView() {
+  const { toast } = useToast()
+  const [members, setMembers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState({ status: 'all', designation: 'all', state: '' })
+
+  useEffect(() => {
+    fetch('/api/party-members').then(r => r.ok ? r.json() : []).then(setMembers).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  const filtered = members.filter((m: any) => {
+    if (filter.status !== 'all' && m.status !== filter.status) return false
+    if (filter.designation !== 'all' && m.designation !== filter.designation) return false
+    if (filter.state && !m.state.toLowerCase().includes(filter.state.toLowerCase())) return false
+    return true
+  })
+
+  const handleStatusChange = async (id: string, status: string) => {
+    try {
+      await fetch(`/api/party-members`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status }) })
+      setMembers(prev => prev.map(m => m.id === id ? { ...m, status } : m))
+      toast({ title: `Status updated to ${status}` })
+    } catch { toast({ title: 'Error', variant: 'destructive' }) }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">Cadre Management</h2>
+          <p className="text-sm text-gray-500">{members.length} total applications • {members.filter((m: any) => m.status === 'pending').length} pending</p>
+        </div>
+      </div>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <Select value={filter.status} onValueChange={v => setFilter(p => ({ ...p, status: v }))}>
+          <SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="verified">Verified</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="suspended">Suspended</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filter.designation} onValueChange={v => setFilter(p => ({ ...p, designation: v }))}>
+          <SelectTrigger className="w-44"><SelectValue placeholder="Designation" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Levels</SelectItem>
+            <SelectItem value="karyakarta">Karyakarta</SelectItem>
+            <SelectItem value="booth">Booth</SelectItem>
+            <SelectItem value="panna_pramukh">Panna Pramukh</SelectItem>
+            <SelectItem value="ward">Ward</SelectItem>
+            <SelectItem value="block">Block</SelectItem>
+            <SelectItem value="district">District</SelectItem>
+            <SelectItem value="state">State</SelectItem>
+          </SelectContent>
+        </Select>
+        <Input placeholder="Filter by state..." value={filter.state} onChange={e => setFilter(p => ({ ...p, state: e.target.value }))} className="w-48" />
+      </div>
+      {/* Table */}
+      {loading ? <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto" style={{ color: BRAND_SAFFRON }} /></div> : (
+        <Card className="shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>State / District</TableHead>
+                <TableHead>Designation</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.slice(0, 50).map((m: any) => (
+                <TableRow key={m.id}>
+                  <TableCell className="font-medium">{m.fullName}</TableCell>
+                  <TableCell className="text-sm">{m.phone}</TableCell>
+                  <TableCell className="text-sm text-gray-500">{m.state}{m.district ? `, ${m.district}` : ''}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-xs capitalize">{m.designation?.replace('_', ' ')}</Badge></TableCell>
+                  <TableCell>
+                    <Badge className={`text-xs ${m.status === 'active' ? 'bg-green-100 text-green-700' : m.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : m.status === 'verified' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'}`}>
+                      {m.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Select value={m.status} onValueChange={v => handleStatusChange(m.id, v)}>
+                      <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="verified">Verify</SelectItem>
+                        <SelectItem value="active">Activate</SelectItem>
+                        <SelectItem value="suspended">Suspend</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {filtered.length > 50 && <p className="text-xs text-gray-400 p-3 text-center">Showing 50 of {filtered.length}</p>}
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// ─── Blood Bank Admin View ───────────────────────────────────────────────────
+
+function BloodBankAdminView() {
+  const [donors, setDonors] = useState<any[]>([])
+  const [requests, setRequests] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/blood-bank/donors').then(r => r.ok ? r.json() : []),
+      fetch('/api/blood-bank/requests').then(r => r.ok ? r.json() : []),
+    ]).then(([d, r]) => { setDonors(d); setRequests(r) }).finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto" style={{ color: BRAND_SAFFRON }} /></div>
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-red-600">{donors.length}</p><p className="text-xs text-gray-500">Total Donors</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{donors.filter((d: any) => d.available).length}</p><p className="text-xs text-gray-500">Available</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-orange-600">{requests.filter((r: any) => r.status === 'open').length}</p><p className="text-xs text-gray-500">Open Requests</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{requests.filter((r: any) => r.status === 'fulfilled').length}</p><p className="text-xs text-gray-500">Fulfilled</p></CardContent></Card>
+      </div>
+      <Tabs defaultValue="donors">
+        <TabsList><TabsTrigger value="donors">Donors ({donors.length})</TabsTrigger><TabsTrigger value="requests">Requests ({requests.length})</TabsTrigger></TabsList>
+        <TabsContent value="donors">
+          <Card className="shadow-sm"><Table><TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Blood Group</TableHead><TableHead>Phone</TableHead><TableHead>Location</TableHead><TableHead>Available</TableHead></TableRow></TableHeader><TableBody>
+            {donors.map((d: any) => (<TableRow key={d.id}><TableCell className="font-medium">{d.fullName}</TableCell><TableCell><Badge className="bg-red-600 text-white">{d.bloodGroup}</Badge></TableCell><TableCell>{d.phone}</TableCell><TableCell className="text-sm text-gray-500">{d.city || d.district}, {d.state}</TableCell><TableCell>{d.available ? <Badge className="bg-green-100 text-green-700">Yes</Badge> : <Badge className="bg-gray-100 text-gray-500">No</Badge>}</TableCell></TableRow>))}
+          </TableBody></Table></Card>
+        </TabsContent>
+        <TabsContent value="requests">
+          <Card className="shadow-sm"><Table><TableHeader><TableRow><TableHead>Patient</TableHead><TableHead>Blood Group</TableHead><TableHead>Units</TableHead><TableHead>Hospital</TableHead><TableHead>Urgency</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>
+            {requests.map((r: any) => (<TableRow key={r.id}><TableCell className="font-medium">{r.patientName}</TableCell><TableCell><Badge className="bg-red-600 text-white">{r.bloodGroup}</Badge></TableCell><TableCell>{r.units}</TableCell><TableCell className="text-sm">{r.hospital}</TableCell><TableCell><Badge className={r.urgency === 'critical' ? 'bg-red-100 text-red-700' : r.urgency === 'urgent' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}>{r.urgency}</Badge></TableCell><TableCell><Badge variant="outline">{r.status}</Badge></TableCell></TableRow>))}
+          </TableBody></Table></Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+// ─── Grievances View ─────────────────────────────────────────────────────────
+
+function GrievancesView() {
+  const { toast } = useToast()
+  const [grievances, setGrievances] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/grievances').then(r => r.ok ? r.json() : []).then(setGrievances).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto" style={{ color: BRAND_SAFFRON }} /></div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div><h2 className="text-lg font-semibold">Grievance Redressal (Jan Sunwai)</h2><p className="text-sm text-gray-500">{grievances.length} tickets • {grievances.filter((g: any) => g.status === 'open').length} open</p></div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{grievances.filter((g: any) => g.status === 'open').length}</p><p className="text-xs text-gray-500">Open</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-yellow-600">{grievances.filter((g: any) => g.status === 'in_progress').length}</p><p className="text-xs text-gray-500">In Progress</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{grievances.filter((g: any) => g.status === 'resolved').length}</p><p className="text-xs text-gray-500">Resolved</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-red-600">{grievances.filter((g: any) => g.priority === 'critical').length}</p><p className="text-xs text-gray-500">Critical</p></CardContent></Card>
+      </div>
+      <Card className="shadow-sm"><Table><TableHeader><TableRow><TableHead>Ticket</TableHead><TableHead>Citizen</TableHead><TableHead>Subject</TableHead><TableHead>Category</TableHead><TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Date</TableHead></TableRow></TableHeader><TableBody>
+        {grievances.map((g: any) => (<TableRow key={g.id}><TableCell className="font-mono text-xs">{g.ticketNo?.slice(0, 8)}</TableCell><TableCell><div><p className="font-medium text-sm">{g.citizenName}</p><p className="text-xs text-gray-400">{g.citizenPhone}</p></div></TableCell><TableCell className="max-w-[200px] truncate text-sm">{g.subject}</TableCell><TableCell><Badge variant="outline" className="text-xs capitalize">{g.category}</Badge></TableCell><TableCell><Badge className={g.priority === 'critical' ? 'bg-red-100 text-red-700' : g.priority === 'high' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}>{g.priority}</Badge></TableCell><TableCell><Badge className={g.status === 'resolved' ? 'bg-green-100 text-green-700' : g.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}>{g.status}</Badge></TableCell><TableCell className="text-xs text-gray-400">{new Date(g.createdAt).toLocaleDateString()}</TableCell></TableRow>))}
+      </TableBody></Table></Card>
+    </div>
+  )
+}
+
+// ─── Events View ─────────────────────────────────────────────────────────────
+
+function EventsView() {
+  const { toast } = useToast()
+  const [events, setEvents] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/events').then(r => r.ok ? r.json() : []).then(setEvents).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto" style={{ color: BRAND_SAFFRON }} /></div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div><h2 className="text-lg font-semibold">Events & Rally Management</h2><p className="text-sm text-gray-500">{events.length} events</p></div>
+        <Button style={{ backgroundColor: BRAND_SAFFRON, color: '#000' }}><Plus className="size-4 mr-2" />New Event</Button>
+      </div>
+      {events.length === 0 ? (
+        <div className="text-center py-16 text-gray-400"><Clock className="size-12 mx-auto mb-3 opacity-50" /><p>No events yet</p></div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {events.map((e: any) => (
+            <Card key={e.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div><h3 className="font-semibold">{e.title}</h3><p className="text-sm text-gray-500">{e.venue}, {e.city}</p><p className="text-xs text-gray-400 mt-1">{e.date} • {e.eventType}</p></div>
+                  <Badge className={e.status === 'upcoming' ? 'bg-blue-100 text-blue-700' : e.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>{e.status}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Donations View ──────────────────────────────────────────────────────────
+
+function DonationsView() {
+  const [donations, setDonations] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/donations').then(r => r.ok ? r.json() : []).then(setDonations).catch(() => {}).finally(() => setLoading(false))
+  }, [])
+
+  const totalAmount = donations.reduce((sum: number, d: any) => sum + (d.amount || 0), 0)
+
+  if (loading) return <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto" style={{ color: BRAND_SAFFRON }} /></div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div><h2 className="text-lg font-semibold">Donations & Treasury</h2><p className="text-sm text-gray-500">{donations.length} donations</p></div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-green-600">₹{totalAmount.toLocaleString('en-IN')}</p><p className="text-xs text-gray-500">Total Collected</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold" style={{ color: BRAND_SAFFRON }}>{donations.length}</p><p className="text-xs text-gray-500">Total Donations</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">₹{donations.length > 0 ? Math.round(totalAmount / donations.length).toLocaleString('en-IN') : 0}</p><p className="text-xs text-gray-500">Average</p></CardContent></Card>
+      </div>
+      {donations.length === 0 ? (
+        <div className="text-center py-16 text-gray-400"><TrendingUp className="size-12 mx-auto mb-3 opacity-50" /><p>No donations recorded yet</p></div>
+      ) : (
+        <Card className="shadow-sm"><Table><TableHeader><TableRow><TableHead>Donor</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Purpose</TableHead><TableHead>State</TableHead><TableHead>Date</TableHead></TableRow></TableHeader><TableBody>
+          {donations.map((d: any) => (<TableRow key={d.id}><TableCell className="font-medium">{d.donorName}</TableCell><TableCell className="font-bold text-green-600">₹{d.amount?.toLocaleString('en-IN')}</TableCell><TableCell><Badge variant="outline" className="text-xs uppercase">{d.method}</Badge></TableCell><TableCell className="text-sm capitalize">{d.purpose}</TableCell><TableCell className="text-sm text-gray-500">{d.state}</TableCell><TableCell className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleDateString()}</TableCell></TableRow>))}
+        </TableBody></Table></Card>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Admin Page Component ───────────────────────────────────────────────
 
 export default function AdminPage() {
@@ -2224,8 +2485,13 @@ export default function AdminPage() {
   const PAGE_TITLES: Record<AdminPage, string> = {
     dashboard: 'Dashboard',
     'page-builder': 'Page Builder',
+    cadre: 'Cadre Management',
+    'blood-bank': 'Blood Bank',
+    grievances: 'Grievance Redressal',
+    events: 'Events & Rallies',
+    donations: 'Donations & Treasury',
     media: 'Media Library',
-    members: 'Members & Leaders',
+    members: 'Leaders & Leadership',
     settings: 'Site Settings',
     messages: 'Contact Messages',
   }
@@ -2236,6 +2502,11 @@ export default function AdminPage() {
       case 'page-builder': 
         if (typeof window !== 'undefined') window.location.href = '/admin/builder'
         return <div className="flex items-center justify-center h-64"><Loader2 className="size-8 animate-spin" style={{ color: BRAND_SAFFRON }} /><span className="ml-3 text-gray-500">Opening Page Builder...</span></div>
+      case 'cadre': return <CadreView />
+      case 'blood-bank': return <BloodBankAdminView />
+      case 'grievances': return <GrievancesView />
+      case 'events': return <EventsView />
+      case 'donations': return <DonationsView />
       case 'media': return <MediaView />
       case 'members': return <MembersView />
       case 'settings': return <SettingsView />

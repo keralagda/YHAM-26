@@ -28,3 +28,22 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch' }, { status: 500 })
   }
 }
+
+// Admin - update member status
+export async function PUT(request: Request) {
+  const user = await verifySession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { id, status, designation, notes } = await request.json()
+    if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 })
+    const data: Record<string, unknown> = {}
+    if (status) data.status = status
+    if (designation) data.designation = designation
+    if (notes !== undefined) data.notes = notes
+    if (status === 'verified') data.verifiedAt = new Date()
+    const member = await db.partyMember.update({ where: { id }, data })
+    return NextResponse.json(member)
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
+  }
+}
