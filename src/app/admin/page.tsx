@@ -62,6 +62,8 @@ import {
   FolderOpen,
   Layout,
   Copy,
+  Vote,
+  Sparkles,
 } from 'lucide-react'
 import {
   LineChart,
@@ -218,7 +220,7 @@ interface AuthUser {
 type SectionType = 'hero' | 'content' | 'leadership' | 'cta'
 type LanguageKey = 'hi' | 'en' | 'ml'
 type ContentMap = Record<string, string>
-type AdminPage = 'dashboard' | 'page-builder' | 'media' | 'members' | 'cadre' | 'blood-bank' | 'grievances' | 'events' | 'donations' | 'settings' | 'messages'
+type AdminPage = 'dashboard' | 'page-builder' | 'media' | 'members' | 'cadre' | 'blood-bank' | 'grievances' | 'events' | 'donations' | 'settings' | 'messages' | 'communications' | 'election' | 'ai-platform'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -254,6 +256,9 @@ const NAV_ITEMS: { key: AdminPage; label: string; icon: React.ReactNode }[] = [
   { key: 'members', label: 'Leaders', icon: <Star className="size-4" /> },
   { key: 'settings', label: 'Settings', icon: <Settings className="size-4" /> },
   { key: 'messages', label: 'Messages', icon: <Mail className="size-4" /> },
+  { key: 'communications', label: 'Broadcaster', icon: <Megaphone className="size-4" /> },
+  { key: 'election', label: 'Election Hub', icon: <Vote className="size-4" /> },
+  { key: 'ai-platform', label: 'AI Workspace', icon: <Sparkles className="size-4" /> },
 ]
 
 const SETTINGS_LABELS: Record<string, string> = {
@@ -2592,6 +2597,9 @@ export default function AdminPage() {
     members: 'Leaders & Leadership',
     settings: 'Site Settings',
     messages: 'Contact Messages',
+    communications: 'Communication Hub',
+    election: 'Election Hub',
+    'ai-platform': 'AI Campaign Hub',
   }
 
   const renderPage = () => {
@@ -2609,6 +2617,9 @@ export default function AdminPage() {
       case 'members': return <MembersView />
       case 'settings': return <SettingsView />
       case 'messages': return <MessagesView />
+      case 'communications': return <CommunicationsView />
+      case 'election': return <ElectionView />
+      case 'ai-platform': return <AiPlatformView />
     }
   }
 
@@ -2779,6 +2790,564 @@ export default function AdminPage() {
             </motion.div>
           </AnimatePresence>
         </main>
+      </div>
+    </div>
+  )
+}
+
+// ─── Communications View ──────────────────────────────────────────────────────
+
+function CommunicationsView() {
+  const { toast } = useToast()
+  const [campaigns, setCampaigns] = useState<any[]>([])
+  const [members, setMembers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [form, setForm] = useState({ title: '', message: '', channel: 'email', targetGroup: 'all', stateFilter: '' })
+
+  const fetchCampaigns = () => {
+    setLoading(true)
+    fetch('/api/admin/broadcasts').then(r => r.ok ? r.json() : []).then(setCampaigns).catch(() => {}).finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetch('/api/party-members').then(r => r.ok ? r.json() : []).then(setMembers).catch(() => {})
+    fetchCampaigns()
+  }, [])
+
+  const currentTargetCount = members.filter((m: any) => {
+    if (m.status !== 'verified' && m.status !== 'active') return false
+    if (form.targetGroup !== 'all' && m.designation !== form.targetGroup) return false
+    if (form.stateFilter && m.state.toLowerCase() !== form.stateFilter.toLowerCase()) return false
+    return true
+  }).length
+
+  const handleBroadcastSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.title || !form.message) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/broadcasts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      })
+
+      if (res.ok) {
+        toast({ title: 'Broadcast dispatched successfully!' })
+        setForm({ title: '', message: '', channel: 'email', targetGroup: 'all', stateFilter: '' })
+        fetchCampaigns()
+      } else {
+        toast({ title: 'Broadcast dispatch failed', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error dispatching campaign', variant: 'destructive' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">Communication Broadcast Hub</h2>
+          <p className="text-sm text-gray-500">Dispatch targeted SMS, Email, and WhatsApp campaigns directly to active party volunteers.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Composing Panel */}
+        <Card className="lg:col-span-3 border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-base font-bold">Compose Campaign</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <form onSubmit={handleBroadcastSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="channel">Select Channel</Label>
+                  <Select value={form.channel} onValueChange={v => setForm(p => ({ ...p, channel: v }))}>
+                    <SelectTrigger id="channel"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="email">📧 Email Broadcast</SelectItem>
+                      <SelectItem value="sms">💬 SMS Notification</SelectItem>
+                      <SelectItem value="whatsapp">📱 WhatsApp Message</SelectItem>
+                      <SelectItem value="push">🔔 Mobile Push Notification</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="targetGroup">Target Designation</Label>
+                  <Select value={form.targetGroup} onValueChange={v => setForm(p => ({ ...p, targetGroup: v }))}>
+                    <SelectTrigger id="targetGroup"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Cadre</SelectItem>
+                      <SelectItem value="karyakarta">Karyakartas</SelectItem>
+                      <SelectItem value="booth">Booth Leads</SelectItem>
+                      <SelectItem value="panna_pramukh">Panna Pramukhs</SelectItem>
+                      <SelectItem value="state">State Leads</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="stateFilter">State / Region Filter (Optional)</Label>
+                  <Input id="stateFilter" placeholder="e.g. Bihar, Kerala" value={form.stateFilter} onChange={e => setForm(p => ({ ...p, stateFilter: e.target.value }))} />
+                </div>
+                <div className="p-4 bg-gray-50 border rounded-lg flex flex-col justify-center text-center">
+                  <span className="text-2xl font-extrabold text-[#000080]">{currentTargetCount}</span>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Matching Recipients</span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="title">Campaign Title / Subject *</Label>
+                <Input id="title" required placeholder="Subject of the message..." value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="message">Message Body *</Label>
+                <Textarea id="message" required rows={5} placeholder="Write campaign body text..." value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} />
+              </div>
+
+              <Button type="submit" disabled={saving || currentTargetCount === 0} style={{ backgroundColor: BRAND_SAFFRON, color: '#000' }} className="w-full font-bold">
+                {saving ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Megaphone className="size-4 mr-1.5" />} Send Broadcast
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Dispatch History List */}
+        <Card className="lg:col-span-2 border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-base font-bold">Campaign History Logs</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            {loading ? (
+              <div className="text-center py-8"><Loader2 className="size-6 animate-spin mx-auto" /></div>
+            ) : campaigns.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-12">No broadcast logs recorded.</p>
+            ) : (
+              <div className="space-y-3 max-h-[465px] overflow-y-auto pr-1">
+                {campaigns.map((c: any) => (
+                  <div key={c.id} className="p-3 border rounded-lg bg-gray-50 space-y-1.5 text-xs relative">
+                    <div className="flex justify-between items-center">
+                      <Badge className="bg-[#000080] text-white text-[9px] uppercase">{c.channel}</Badge>
+                      <Badge variant="outline" className="text-[9px] text-[#138808] border-[#138808]/20">{c.sentCount} sent</Badge>
+                    </div>
+                    <h4 className="font-bold text-gray-900 line-clamp-1">{c.title}</h4>
+                    <p className="text-gray-500 line-clamp-2">{c.message}</p>
+                    <div className="flex justify-between text-[9px] text-gray-400 border-t pt-1.5 mt-2">
+                      <span>Group: {c.targetGroup} {c.stateFilter && `(${c.stateFilter})`}</span>
+                      <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// ─── Election View ────────────────────────────────────────────────────────────
+
+function ElectionView() {
+  const { toast } = useToast()
+  const [booths, setBooths] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState<string | null>(null)
+
+  const fetchBooths = () => {
+    setLoading(true)
+    fetch('/api/admin/election')
+      .then(r => r.ok ? r.json() : [])
+      .then(setBooths)
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchBooths()
+  }, [])
+
+  const handleTurnoutChange = async (id: string, value: string) => {
+    const val = parseFloat(value)
+    if (isNaN(val) || val < 0 || val > 100) return
+    setSavingId(id)
+    try {
+      const res = await fetch('/api/admin/election', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, turnoutPercent: val })
+      })
+      if (res.ok) {
+        setBooths(p => p.map(b => b.id === id ? { ...b, turnoutPercent: val } : b))
+      } else {
+        toast({ title: 'Failed to update turnout', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error saving turnout', variant: 'destructive' })
+    } finally {
+      setSavingId(null)
+    }
+  }
+
+  const handleReset = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/admin/election', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'seed' })
+      })
+      if (res.ok) {
+        setBooths(await res.json())
+        toast({ title: 'Booths reset to defaults' })
+      }
+    } catch {
+      toast({ title: 'Error resetting booths', variant: 'destructive' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Aggregate stats
+  const totalRegistered = booths.reduce((sum, b) => sum + b.totalVoters, 0)
+  const averageOutreach = booths.length > 0 ? booths.reduce((sum, b) => sum + b.outreachPercent, 0) / booths.length : 0
+  const totalSupport = booths.reduce((sum, b) => sum + b.voterSupport, 0)
+  const totalOppose = booths.reduce((sum, b) => sum + b.voterOppose, 0)
+  const totalNeutral = booths.reduce((sum, b) => sum + b.voterNeutral, 0)
+  const marginPercent = totalRegistered > 0 ? ((totalSupport - totalOppose) / totalRegistered) * 100 : 0
+  
+  // Turnout stats
+  const totalVotedCount = booths.reduce((sum, b) => sum + Math.round(b.totalVoters * (b.turnoutPercent / 100)), 0)
+  const overallTurnoutPercent = totalRegistered > 0 ? (totalVotedCount / totalRegistered) * 100 : 0
+
+  if (loading) return <div className="py-16 text-center"><Loader2 className="size-8 animate-spin mx-auto text-[#FF9933]" /></div>
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">Election Command & Polling Hub</h2>
+          <p className="text-sm text-gray-500">Monitor voter outreach, support sentiments, and live voter turnout status on election day.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleReset} className="text-xs">
+          Reset / Re-Seed Booths
+        </Button>
+      </div>
+
+      {/* Aggregate Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="shadow-sm">
+          <CardContent className="p-4 text-center">
+            <p className="text-3xl font-extrabold text-[#000080]">{totalRegistered.toLocaleString('en-IN')}</p>
+            <p className="text-xs text-gray-400 font-bold uppercase mt-1">Total Target Voters</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardContent className="p-4 text-center">
+            <p className="text-3xl font-extrabold text-[#FF9933]">{averageOutreach.toFixed(1)}%</p>
+            <p className="text-xs text-gray-400 font-bold uppercase mt-1">Average Outreach</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm">
+          <CardContent className="p-4 text-center">
+            <p className={`text-3xl font-extrabold ${marginPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {marginPercent >= 0 ? '+' : ''}{marginPercent.toFixed(1)}%
+            </p>
+            <p className="text-xs text-gray-400 font-bold uppercase mt-1">Net Support Margin</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm border-2 border-red-500/20">
+          <CardContent className="p-4 text-center bg-red-500/5">
+            <p className="text-3xl font-extrabold text-red-600">{overallTurnoutPercent.toFixed(1)}%</p>
+            <p className="text-xs text-gray-400 font-bold uppercase mt-1">Live Voter Turnout</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Sentiment & Turnout details */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Booth Table */}
+        <Card className="lg:col-span-2 border-gray-200 overflow-hidden shadow-sm">
+          <CardHeader className="pb-3 border-b bg-gray-50">
+            <CardTitle className="text-sm font-bold">Booth Level Performance Matrix</CardTitle>
+          </CardHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Booth ID / Name</TableHead>
+                <TableHead>Voters</TableHead>
+                <TableHead>Outreach</TableHead>
+                <TableHead>Support Sentiment</TableHead>
+                <TableHead className="w-28 text-right">Turnout (%)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {booths.map(b => {
+                const margin = b.voterSupport - b.voterOppose
+                return (
+                  <TableRow key={b.id}>
+                    <TableCell>
+                      <p className="font-bold text-sm">{b.boothNumber}</p>
+                      <p className="text-xs text-gray-400">{b.boothName}</p>
+                    </TableCell>
+                    <TableCell className="text-sm font-semibold">{b.totalVoters}</TableCell>
+                    <TableCell className="text-sm font-bold text-[#138808]">{b.outreachPercent}%</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-xs font-semibold">
+                        <span className="text-green-600">👍 {b.voterSupport}</span>
+                        <span className="text-red-500">👎 {b.voterOppose}</span>
+                        <Badge className={`${margin >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} text-[10px] h-4 py-0`}>
+                          {margin >= 0 ? '+' : ''}{margin}
+                        </Badge>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {savingId === b.id && <Loader2 className="size-3 animate-spin text-gray-400" />}
+                        <Input 
+                          type="number" 
+                          className="h-8 w-16 text-xs text-right pr-1 border-gray-200" 
+                          defaultValue={b.turnoutPercent}
+                          onBlur={e => handleTurnoutChange(b.id, e.target.value)}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </Card>
+
+        {/* Sentiment Analysis card */}
+        <Card className="border-gray-200 shadow-sm">
+          <CardHeader className="pb-3 border-b bg-gray-50">
+            <CardTitle className="text-sm font-bold">Voter Sentiments Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 space-y-6">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-semibold text-gray-500">Support (Estimated)</span>
+              <span className="font-bold text-green-600">{totalSupport} voters</span>
+            </div>
+            <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden flex">
+              <div className="bg-green-500 h-full" style={{ width: `${totalRegistered > 0 ? (totalSupport / totalRegistered) * 100 : 0}%` }} />
+              <div className="bg-red-400 h-full" style={{ width: `${totalRegistered > 0 ? (totalOppose / totalRegistered) * 100 : 0}%` }} />
+              <div className="bg-gray-300 h-full" style={{ width: `${totalRegistered > 0 ? (totalNeutral / totalRegistered) * 100 : 0}%` }} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs pt-4 border-t">
+              <div className="space-y-1">
+                <p className="font-semibold text-green-600">👍 Support</p>
+                <p className="text-lg font-extrabold text-gray-800">{totalRegistered > 0 ? ((totalSupport / totalRegistered) * 100).toFixed(1) : 0}%</p>
+              </div>
+              <div className="space-y-1">
+                <p className="font-semibold text-red-500">👎 Oppose</p>
+                <p className="text-lg font-extrabold text-gray-800">{totalRegistered > 0 ? ((totalOppose / totalRegistered) * 100).toFixed(1) : 0}%</p>
+              </div>
+              <div className="space-y-1">
+                <p className="font-semibold text-gray-400">😐 Neutral</p>
+                <p className="text-lg font-extrabold text-gray-800">{totalRegistered > 0 ? ((totalNeutral / totalRegistered) * 100).toFixed(1) : 0}%</p>
+              </div>
+            </div>
+            <div className="p-4 bg-yellow-50 border border-yellow-100 rounded-lg text-xs text-yellow-800 space-y-1 leading-relaxed">
+              <p className="font-bold">⚠️ High-Risk Booth Alerts</p>
+              <p>Booth BP-104 (Bhagalpur Railway Colony School) has a tight margin (+70). Mobilize local Booth Leads & Panna Pramukhs for direct household surveys.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// ─── AI Workspace View ────────────────────────────────────────────────────────
+
+function AiPlatformView() {
+  const { toast } = useToast()
+  const [mode, setMode] = useState<'script' | 'speech' | 'translate'>('script')
+  const [form, setForm] = useState({ theme: 'development', tone: 'inspiring', prompt: '', text: '', targetLang: 'hi' })
+  const [generating, setGenerating] = useState(false)
+  const [result, setResult] = useState('')
+
+  const handleGenerate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setGenerating(true)
+    try {
+      const res = await fetch('/api/admin/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode, ...form })
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setResult(data.result)
+      } else {
+        toast({ title: 'AI processing failed', variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Error communicating with AI engine', variant: 'destructive' })
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(result)
+    toast({ title: 'Copied to clipboard!', description: 'You can now paste it into the Broadcaster or Page Builder.' })
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">AI Campaign & Language Workspace</h2>
+          <p className="text-sm text-gray-500">Draft localized announcements, outline speech scripts, and translate outreach messages.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Settings Panel */}
+        <Card className="lg:col-span-2 border-gray-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-base font-bold">Campaign AI Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="flex border-b mb-6 text-xs font-bold gap-1">
+              <button 
+                type="button"
+                onClick={() => { setMode('script'); setResult('') }}
+                className={`flex-1 pb-3 text-center border-b-2 ${mode === 'script' ? 'border-[#FF9933] text-[#FF9933]' : 'border-transparent text-gray-400'}`}
+              >
+                📜 Script Writer
+              </button>
+              <button 
+                type="button"
+                onClick={() => { setMode('speech'); setResult('') }}
+                className={`flex-1 pb-3 text-center border-b-2 ${mode === 'speech' ? 'border-[#FF9933] text-[#FF9933]' : 'border-transparent text-gray-400'}`}
+              >
+                🎤 Speech Outline
+              </button>
+              <button 
+                type="button"
+                onClick={() => { setMode('translate'); setResult('') }}
+                className={`flex-1 pb-3 text-center border-b-2 ${mode === 'translate' ? 'border-[#FF9933] text-[#FF9933]' : 'border-transparent text-gray-400'}`}
+              >
+                🌐 Translator
+              </button>
+            </div>
+
+            <form onSubmit={handleGenerate} className="space-y-4">
+              {mode === 'script' && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="theme">Campaign Theme</Label>
+                    <Select value={form.theme} onValueChange={v => setForm(p => ({ ...p, theme: v }))}>
+                      <SelectTrigger id="theme"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="development">🚀 Regional Development</SelectItem>
+                        <SelectItem value="social_justice">⚖️ Social Upliftment</SelectItem>
+                        <SelectItem value="cadre_rally">📢 Volunteer Rally Drive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="tone">Target Messaging Tone</Label>
+                    <Select value={form.tone} onValueChange={v => setForm(p => ({ ...p, tone: v }))}>
+                      <SelectTrigger id="tone"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inspiring">🌟 Inspiring / Positive</SelectItem>
+                        <SelectItem value="aggressive">🔥 Urgent / Action Oriented</SelectItem>
+                        <SelectItem value="informative">📢 Clear / Informative</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="prompt">Core Keyword / Topic Focus</Label>
+                    <Input id="prompt" placeholder="e.g. Free computer class, youth rally, Gaya town" value={form.prompt} onChange={e => setForm(p => ({ ...p, prompt: e.target.value }))} />
+                  </div>
+                </>
+              )}
+
+              {mode === 'speech' && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="theme">Speech Focus Theme</Label>
+                    <Select value={form.theme} onValueChange={v => setForm(p => ({ ...p, theme: v }))}>
+                      <SelectTrigger id="theme"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="development">🚀 Development & Jobs</SelectItem>
+                        <SelectItem value="social_justice">⚖️ Constitutional Upliftment</SelectItem>
+                        <SelectItem value="cadre_rally">📢 Volunteer Accountability</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="prompt">Core Rally Keyword</Label>
+                    <Input id="prompt" placeholder="e.g. Youth empowerment, Bihar rights" value={form.prompt} onChange={e => setForm(p => ({ ...p, prompt: e.target.value }))} />
+                  </div>
+                </>
+              )}
+
+              {mode === 'translate' && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="targetLang">Translate Into</Label>
+                    <Select value={form.targetLang} onValueChange={v => setForm(p => ({ ...p, targetLang: v }))}>
+                      <SelectTrigger id="targetLang"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="hi">🇮🇳 Hindi (हिन्दी)</SelectItem>
+                        <SelectItem value="ml">🏛️ Malayalam (മലയാളം)</SelectItem>
+                        <SelectItem value="en">🌐 English (English)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="text">Source Message</Label>
+                    <Textarea id="text" required rows={4} placeholder="Type or paste the script you want to translate..." value={form.text} onChange={e => setForm(p => ({ ...p, text: e.target.value }))} />
+                  </div>
+                </>
+              )}
+
+              <Button type="submit" disabled={generating} style={{ backgroundColor: BRAND_SAFFRON, color: '#000' }} className="w-full font-bold">
+                {generating ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Sparkles className="size-4 mr-1.5" />} Generate Output
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Results Panel */}
+        <Card className="lg:col-span-3 border-gray-200 flex flex-col justify-between shadow-sm">
+          <CardHeader className="border-b bg-gray-50 flex flex-row items-center justify-between py-3">
+            <CardTitle className="text-sm font-bold">Generated AI Content Result</CardTitle>
+            {result && (
+              <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 text-xs text-gray-500">
+                <Copy className="size-3.5" /> Copy Script
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent className="p-6 flex-1 flex flex-col justify-center">
+            {generating ? (
+              <div className="text-center py-24"><Loader2 className="size-10 animate-spin mx-auto text-[#FF9933]" /><p className="text-sm text-gray-400 mt-3 font-semibold">Generating scripts...</p></div>
+            ) : result ? (
+              <pre className="p-4 bg-gray-50 border rounded-lg whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed overflow-y-auto max-h-[350px]">
+                {result}
+              </pre>
+            ) : (
+              <div className="text-center py-24 text-gray-400">
+                <Sparkles className="size-12 mx-auto mb-3 opacity-30 text-[#FF9933]" />
+                <p className="text-sm">Configure parameter values on the left and click generate to view scripts.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

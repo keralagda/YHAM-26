@@ -307,3 +307,41 @@ model Donation {
   notes         String   @default("")
   createdAt     DateTime @default(now())
 }
+
+model CadreTask {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  assignedTo  String   @default("all") // "all" or designation value (e.g. "booth", "karyakarta")
+  status      String   @default("open") // "open", "completed"
+  completedBy String   @default("[]") // JSON array of member IDs who completed it
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BroadcastCampaign {
+  id          String   @id @default(cuid())
+  title       String
+  message     String
+  channel     String   // email, sms, whatsapp, push
+  targetGroup String   // all, karyakarta, booth, state, etc.
+  stateFilter String   @default("") // optional state filter
+  sentCount   Int      @default(0)
+  status      String   @default("sent") // sent, failed
+  createdAt   DateTime @default(now())
+}
+
+model BoothPerformance {
+  id              String   @id @default(cuid())
+  boothNumber     String   @unique
+  boothName       String
+  assemblySector  String
+  totalVoters     Int      @default(0)
+  outreachPercent Float    @default(0.0)
+  voterSupport    Int      @default(0)
+  voterOppose     Int      @default(0)
+  voterNeutral    Int      @default(0)
+  turnoutPercent  Float    @default(0.0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

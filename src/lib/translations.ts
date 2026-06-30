@@ -14,6 +14,11 @@ export const translations: Record<Language, Record<string, string>> = {
     navContact: "संपर्क",
     navJoin: "सदस्य बनें",
     navBloodBank: "ब्लड बैंक",
+    navGrievances: "जन सुनवाई",
+    navDonations: "दान करें",
+    navEvents: "कार्यक्रम",
+    navMember: "कार्यकर्ता पोर्टल",
+    navMedia: "मीडिया सेंटर",
     langToggle: "भाषा",
 
     // Hero Section
@@ -156,6 +161,11 @@ export const translations: Record<Language, Record<string, string>> = {
     navContact: "Contact",
     navJoin: "Join Party",
     navBloodBank: "Blood Bank",
+    navGrievances: "Jan Sunwai",
+    navDonations: "Donate",
+    navEvents: "Events",
+    navMember: "Member Portal",
+    navMedia: "Media Center",
     langToggle: "Language",
 
     // Hero Section
@@ -298,6 +308,11 @@ export const translations: Record<Language, Record<string, string>> = {
     navContact: "ബന്ധപ്പെടുക",
     navJoin: "അംഗമാകൂ",
     navBloodBank: "ബ്ലഡ് ബാങ്ക്",
+    navGrievances: "ജന സമ്പർക്കം",
+    navDonations: "സംഭാവന",
+    navEvents: "പരിപാടികൾ",
+    navMember: "മെമ്പർ പോർട്ടൽ",
+    navMedia: "മീഡിയ സെന്റർ",
     langToggle: "ഭാഷ",
 
     // Hero Section

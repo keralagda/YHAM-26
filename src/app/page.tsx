@@ -50,6 +50,7 @@ export default function Home() {
   const [yhamMembers, setYhamMembers] = useState<any[]>([])
   const [hamMembers, setHamMembers] = useState<any[]>([])
   const [heroImage, setHeroImage] = useState<string>('')
+  const [dbPages, setDbPages] = useState<any[]>([])
 
   // Fetch site sections from API on mount
   useEffect(() => {
@@ -69,6 +70,9 @@ export default function Home() {
     fetch('/api/pages')
       .then(res => res.ok ? res.json() : [])
       .then((pages: any[]) => {
+        const publishedPages = pages.filter((p: any) => p.published && !p.isHomePage && p.slug !== 'home')
+        setDbPages(publishedPages)
+
         const homePage = pages.find((p: any) => p.isHomePage || p.slug === 'home')
         if (homePage?.blocks) {
           const heroBlock = homePage.blocks.find((b: any) => b.type === 'hero')
@@ -165,6 +169,11 @@ export default function Home() {
     { key: 'navContact', id: 'cta' },
     { key: 'navJoin', id: '', href: '/join' },
     { key: 'navBloodBank', id: '', href: '/blood-bank' },
+    { key: 'navGrievances', id: '', href: '/jan-sunwai' },
+    { key: 'navDonations', id: '', href: '/donate' },
+    { key: 'navEvents', id: '', href: '/events' },
+    { key: 'navMember', id: '', href: '/member' },
+    { key: 'navMedia', id: '', href: '/media' },
   ]
 
   return (
@@ -208,6 +217,11 @@ export default function Home() {
                     {t(item.key)}
                   </button>
                 )
+              ))}
+              {dbPages.map((page) => (
+                <Link key={page.id} href={`/p/${page.slug}`} className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[#FF9933] rounded-lg hover:bg-[#FF9933]/10 transition-all">
+                  {lang === 'hi' ? page.titleHi || page.titleEn : lang === 'ml' ? page.titleMl || page.titleEn : page.titleEn}
+                </Link>
               ))}
             </nav>
 
@@ -282,6 +296,11 @@ export default function Home() {
                       {t(item.key)}
                     </button>
                   )
+                ))}
+                {dbPages.map((page) => (
+                  <Link key={page.id} href={`/p/${page.slug}`} className="block w-full text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-[#FF9933]/10 hover:text-[#FF9933] transition-colors font-medium">
+                    {lang === 'hi' ? page.titleHi || page.titleEn : lang === 'ml' ? page.titleMl || page.titleEn : page.titleEn}
+                  </Link>
                 ))}
               </div>
             </motion.div>
@@ -851,6 +870,11 @@ export default function Home() {
                       {t(item.key)}
                     </button>
                   )
+                ))}
+                {dbPages.map((page) => (
+                  <Link key={page.id} href={`/p/${page.slug}`} className="text-left text-white/60 hover:text-[#FF9933] transition-colors text-sm py-1">
+                    {lang === 'hi' ? page.titleHi || page.titleEn : lang === 'ml' ? page.titleMl || page.titleEn : page.titleEn}
+                  </Link>
                 ))}
                 <Link href="/admin" className="text-left text-white/40 hover:text-[#FF9933] transition-colors text-xs py-1 mt-2 block">
                   Admin Panel
